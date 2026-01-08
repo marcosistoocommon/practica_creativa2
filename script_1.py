@@ -2,7 +2,6 @@
 
 import subprocess, os
 
-subprocess.run("git clone https://github.com/CDPS-ETSIT/practica_creativa2.git", shell=True)
 subprocess.run("sudo apt update", shell=True)
 subprocess.run("sudo apt install software-properties-common", shell=True)
 subprocess.run("sudo add-apt-repository -y ppa:deadsnakes/ppa", shell=True)
