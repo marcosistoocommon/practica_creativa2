@@ -488,5 +488,8 @@ if __name__ == '__main__':
 
     p = int(sys.argv[1])
     logging.info("start at port %s" % (p))
-    # Listen on all interfaces
-    app.run(host='0.0.0.0', port=p, debug=True, threaded=True)
+    # Make it compatible with IPv6 if Linux
+    if sys.platform == "linux":
+        app.run(host='::', port=p, debug=True, threaded=True)
+    else:
+        app.run(host='0.0.0.0', port=p, debug=True, threaded=True)
