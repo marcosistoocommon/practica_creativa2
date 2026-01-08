@@ -61,6 +61,7 @@ detailsHostname = "details" if (os.environ.get("DETAILS_HOSTNAME") is None) else
 ratingsHostname = "ratings" if (os.environ.get("RATINGS_HOSTNAME") is None) else os.environ.get("RATINGS_HOSTNAME")
 reviewsHostname = "reviews" if (os.environ.get("REVIEWS_HOSTNAME") is None) else os.environ.get("REVIEWS_HOSTNAME")
 
+
 flood_factor = 0 if (os.environ.get("FLOOD_FACTOR") is None) else int(os.environ.get("FLOOD_FACTOR"))
 
 details = {
@@ -301,6 +302,7 @@ def front():
     user = session.get('user', '')
     product = getProduct(product_id)
     detailsStatus, details = getProductDetails(product_id, headers)
+    team_id = os.environ.get('TEAM_ID')
 
     if flood_factor > 0:
         floodReviews(product_id, headers)
@@ -313,7 +315,8 @@ def front():
         product=product,
         details=details,
         reviews={"R1":"OK"},
-        user=user)
+        user=user,
+        team_id=team_id)
 
 
 # The API:
