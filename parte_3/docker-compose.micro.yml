@@ -26,7 +26,6 @@ services:
     depends_on:
       - details_cdps_17
       - ratings_cdps_17
-      - reviews_cdps_17
 
   details_cdps_17:
     build:
@@ -43,15 +42,15 @@ services:
     environment:
       - ENABLE_EXTERNAL_BOOK_SERVICE=true
 
-  reviews_cdps_17:
+  reviews_v1_cdps_17:
     build:
       context: ./bookinfo/src/reviews/reviews-wlpcfg
       dockerfile: Dockerfile
       args:
         - service_version=v1
-        - enable_ratings=true
+        - enable_ratings=false
         - star_color=black
-    image: cdps-reviews:g17
+    image: cdps-reviews-v1:g17
     container_name: reviews_cdps_17
     networks:
       - cdps-net
@@ -61,8 +60,56 @@ services:
       - ./bookinfo/src/reviews:/home/gradle/project
     environment:
       - SERVICE_VERSION=v1
+      - ENABLE_RATINGS=false
+      - STAR_COLOR=black
+    profiles:
+      - v1
+
+  reviews_v2_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        - service_version=v2
+        - enable_ratings=true
+        - star_color=black
+    image: cdps-reviews-v2:g17
+    container_name: reviews_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "9081:9080"
+    volumes:
+      - ./bookinfo/src/reviews:/home/gradle/project
+    environment:
+      - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
+    profiles:
+      - v2
+
+  reviews_v3_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        - service_version=v3
+        - enable_ratings=true
+        - star_color=red
+    image: cdps-reviews-v3:g17
+    container_name: reviews_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "9081:9080"
+    volumes:
+      - ./bookinfo/src/reviews:/home/gradle/project
+    environment:
+      - SERVICE_VERSION=v3
+      - ENABLE_RATINGS=true
+      - STAR_COLOR=red
+    profiles:
+      - v3
 
   ratings_cdps_17:
     build:
