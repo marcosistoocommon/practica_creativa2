@@ -121,7 +121,5 @@ services:
       - cdps-net
     ports:
       - "9082:9080"
-    volumes:
-      - ./bookinfo/src/ratings:/opt/microservices
     environment:
       - APP_VERSION=v1
