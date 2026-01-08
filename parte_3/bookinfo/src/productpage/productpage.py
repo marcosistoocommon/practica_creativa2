@@ -56,6 +56,7 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 Bootstrap(app)
 
+team_id = os.environ.get("TEAM_ID", "17")
 servicesDomain = "" if (os.environ.get("SERVICES_DOMAIN") is None) else "." + os.environ.get("SERVICES_DOMAIN")
 detailsHostname = "details" if (os.environ.get("DETAILS_HOSTNAME") is None) else os.environ.get("DETAILS_HOSTNAME")
 ratingsHostname = "ratings" if (os.environ.get("RATINGS_HOSTNAME") is None) else os.environ.get("RATINGS_HOSTNAME")
@@ -313,7 +314,8 @@ def front():
         product=product,
         details=details,
         reviews=reviews,
-        user=user)
+        user=user,
+        team_id=team_id)
 
 
 # The API:

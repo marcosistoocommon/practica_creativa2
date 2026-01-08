@@ -1,0 +1,80 @@
+version: '3.8'
+
+networks:
+  cdps-net:
+    driver: bridge
+
+services:
+  productpage_cdps_17:
+    build:
+      context: ./bookinfo/src/productpage
+      dockerfile: Dockerfile
+    image: cdps-productpage:g17
+    container_name: productpage_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./bookinfo/src/productpage:/opt/microservices
+    environment:
+      - DETAILS_HOSTNAME=details_cdps_17
+      - RATINGS_HOSTNAME=ratings_cdps_17
+      - REVIEWS_HOSTNAME=reviews_cdps_17
+      - SERVICE_VERSION=v1
+      - TEAM_ID=17
+    depends_on:
+      - details_cdps_17
+      - ratings_cdps_17
+      - reviews_cdps_17
+
+  details_cdps_17:
+    build:
+      context: ./bookinfo/src/details
+      dockerfile: Dockerfile
+    image: cdps-details:g17
+    container_name: details_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "7070:7070"
+    volumes:
+      - ./bookinfo/src/details:/opt/microservices
+    environment:
+      - ENABLE_EXTERNAL_BOOK_SERVICE=true
+
+  reviews_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        - service_version=v1
+        - enable_ratings=true
+        - star_color=black
+    image: cdps-reviews:g17
+    container_name: reviews_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "9081:9080"
+    volumes:
+      - ./bookinfo/src/reviews:/home/gradle/project
+    environment:
+      - SERVICE_VERSION=v1
+      - ENABLE_RATINGS=true
+      - STAR_COLOR=black
+
+  ratings_cdps_17:
+    build:
+      context: ./bookinfo/src/ratings
+      dockerfile: Dockerfile
+    image: cdps-ratings:g17
+    container_name: ratings_cdps_17
+    networks:
+      - cdps-net
+    ports:
+      - "9082:9080"
+    volumes:
+      - ./bookinfo/src/ratings:/opt/microservices
+    environment:
+      - APP_VERSION=v1
