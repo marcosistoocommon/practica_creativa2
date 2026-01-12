@@ -2,12 +2,10 @@ FROM python:3.9-slim
 
 WORKDIR /opt/microservices/
 
-COPY requirements.txt .
+COPY bookinfo/src/productpage/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY productpage.py .
-COPY static/ ./static/
-COPY templates/ ./templates/
+COPY bookinfo/src/productpage/ .
 
 EXPOSE 9080
 
