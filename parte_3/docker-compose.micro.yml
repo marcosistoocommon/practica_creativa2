@@ -46,7 +46,7 @@ services:
     image: cdps-ratings:g17
     container_name: ratings_cdps_17
     ports:
-      - "9080:9080"
+      - "9081:9080"
     environment:
       - APP_VERSION=v1
     volumes:
