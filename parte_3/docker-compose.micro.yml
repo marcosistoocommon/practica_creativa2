@@ -50,6 +50,7 @@ services:
         - service_version=v1
         - enable_ratings=false
         - star_color=black
+        - ratings_hostname=ratings_cdps_17
     image: cdps-reviews-v1:g17
     container_name: reviews_cdps_17
     networks:
@@ -74,6 +75,7 @@ services:
         - service_version=v2
         - enable_ratings=true
         - star_color=black
+        - ratings_hostname=ratings_cdps_17
     image: cdps-reviews-v2:g17
     container_name: reviews_cdps_17
     networks:
@@ -98,6 +100,7 @@ services:
         - service_version=v3
         - enable_ratings=true
         - star_color=red
+        - ratings_hostname=ratings_cdps_17
     image: cdps-reviews-v3:g17
     container_name: reviews_cdps_17
     networks:
