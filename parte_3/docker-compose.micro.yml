@@ -60,6 +60,9 @@ services:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=false
       - STAR_COLOR=black
+      - RATINGS_HOSTNAME=ratings_cdps_17
+    depends_on:
+      - ratings_cdps_17
     profiles:
       - v1
 
@@ -82,6 +85,8 @@ services:
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
       - RATINGS_HOSTNAME=ratings_cdps_17
+    depends_on:
+      - ratings_cdps_17
     profiles:
       - v2
 
@@ -104,6 +109,8 @@ services:
       - ENABLE_RATINGS=true
       - STAR_COLOR=red
       - RATINGS_HOSTNAME=ratings_cdps_17
+    depends_on:
+      - ratings_cdps_17
     profiles:
       - v3
 
