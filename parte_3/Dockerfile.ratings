@@ -1,6 +1,6 @@
 FROM node:24-slim
 
-WORKDIR /opt/microservices
+WORKDIR /opt/microservices/
 
 COPY bookinfo/src/ratings/package.json .
 COPY bookinfo/src/ratings/ratings.js .

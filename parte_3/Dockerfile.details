@@ -1,6 +1,6 @@
 FROM ruby:2.7.1-slim
 
-WORKDIR /opt/microservices
+WORKDIR /opt/microservices/
 
 COPY bookinfo/src/details/details.rb .
 
