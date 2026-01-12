@@ -15,6 +15,9 @@ services:
       - "9080:9080"
     environment:
       - ENABLE_RATINGS=true
+      - DETAILS_HOSTNAME=details_cdps_17
+      - RATINGS_HOSTNAME=ratings_cdps_17
+      - REVIEWS_HOSTNAME=reviews_v1_cdps_17
     volumes:
       - ./bookinfo/src/productpage:/app
     networks:
