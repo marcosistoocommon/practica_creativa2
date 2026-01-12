@@ -56,8 +56,6 @@ services:
       - cdps-net
     ports:
       - "9081:9080"
-    volumes:
-      - ./bookinfo/src/reviews:/home/gradle/project
     environment:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=false
@@ -79,8 +77,6 @@ services:
       - cdps-net
     ports:
       - "9081:9080"
-    volumes:
-      - ./bookinfo/src/reviews:/home/gradle/project
     environment:
       - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
@@ -103,8 +99,6 @@ services:
       - cdps-net
     ports:
       - "9081:9080"
-    volumes:
-      - ./bookinfo/src/reviews:/home/gradle/project
     environment:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true
