@@ -1,0 +1,110 @@
+version: '3.8'
+
+networks:
+  cdps-net:
+    driver: bridge
+
+services:
+  productpage_cdps_17:
+    build:
+      context: .
+      dockerfile: Dockerfile.productpage
+    image: cdps-productpage:g17
+    container_name: productpage_cdps_17
+    ports:
+      - "8080:8080"
+    environment:
+      - ENABLE_RATINGS=true
+    volumes:
+      - ./bookinfo/src/productpage:/app
+    networks:
+      - cdps-net
+    depends_on:
+      - details_cdps_17
+      - ratings_cdps_17
+      - reviews_v1_cdps_17
+
+  details_cdps_17:
+    build:
+      context: .
+      dockerfile: Dockerfile.details
+    image: cdps-details:g17
+    container_name: details_cdps_17
+    ports:
+      - "7070:7070"
+    environment:
+      - ENABLE_EXTERNAL_BOOK_SERVICE=true
+    volumes:
+      - ./bookinfo/src/details:/opt/microservices
+    networks:
+      - cdps-net
+
+  ratings_cdps_17:
+    build:
+      context: .
+      dockerfile: Dockerfile.ratings
+    image: cdps-ratings:g17
+    container_name: ratings_cdps_17
+    ports:
+      - "9080:9080"
+    environment:
+      - APP_VERSION=v1
+    volumes:
+      - ./bookinfo/src/ratings:/opt/microservices
+    networks:
+      - cdps-net
+
+  reviews_v1_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        service_version: v1
+        enable_ratings: "true"
+    image: cdps-reviews:g17
+    container_name: reviews_v1_cdps_17
+    ports:
+      - "8081:8080"
+    environment:
+      - SERVICE_VERSION=v1
+      - ENABLE_RATINGS=true
+    networks:
+      - cdps-net
+
+  reviews_v2_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        service_version: v2
+        enable_ratings: "true"
+    image: cdps-reviews:g17
+    container_name: reviews_v2_cdps_17
+    ports:
+      - "8082:8080"
+    environment:
+      - SERVICE_VERSION=v2
+      - ENABLE_RATINGS=true
+    networks:
+      - cdps-net
+    profiles:
+      - inactive
+
+  reviews_v3_cdps_17:
+    build:
+      context: ./bookinfo/src/reviews/reviews-wlpcfg
+      dockerfile: Dockerfile
+      args:
+        service_version: v3
+        enable_ratings: "true"
+    image: cdps-reviews:g17
+    container_name: reviews_v3_cdps_17
+    ports:
+      - "8083:8080"
+    environment:
+      - SERVICE_VERSION=v3
+      - ENABLE_RATINGS=true
+    networks:
+      - cdps-net
+    profiles:
+      - inactive
