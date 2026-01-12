@@ -1,11 +1,14 @@
-FROM python3.9-slim
+FROM python:3.9-slim
 
-WORKDIR /app
+WORKDIR /opt/microservices/
 
-COPY bookinfo/src/productpage/requirements.txt .
-
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY bookinfo/src/productpage/ .
+COPY productpage.py .
+COPY static/ ./static/
+COPY templates/ ./templates/
 
-CMD ["python", "productpage.py"]
+EXPOSE 9080
+
+CMD ["python", "productpage.py", "9080"]
