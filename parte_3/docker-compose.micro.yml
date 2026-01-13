@@ -12,7 +12,7 @@ services:
     image: cdps-productpage:g17
     container_name: productpage_cdps_17
     ports:
-      - "9080:9080"
+      - "8080:8080"
     environment:
       - ENABLE_RATINGS=true
       - DETAILS_HOSTNAME=details_cdps_17
@@ -49,7 +49,7 @@ services:
     image: cdps-ratings:g17
     container_name: ratings_cdps_17
     ports:
-      - "9081:9080"
+      - "9082:9080"
     environment:
       - APP_VERSION=v1
     volumes:
@@ -67,7 +67,7 @@ services:
     image: cdps-reviews:g17
     container_name: reviews_v1_cdps_17
     ports:
-      - "8081:8080"
+      - "9081:9080"
     environment:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=true
@@ -85,7 +85,7 @@ services:
     image: cdps-reviews:g17
     container_name: reviews_v2_cdps_17
     ports:
-      - "8082:8080"
+      - "9083:9080"
     environment:
       - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
@@ -105,7 +105,7 @@ services:
     image: cdps-reviews:g17
     container_name: reviews_v3_cdps_17
     ports:
-      - "8083:8080"
+      - "9084:9080"
     environment:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true

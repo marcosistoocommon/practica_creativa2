@@ -16,4 +16,6 @@ ENV ENABLE_RATINGS ${enable_ratings:-false}
 ENV STAR_COLOR ${star_color:-black}
 ENV RATINGS_HOSTNAME ${ratings_hostname:-ratings}
 
+EXPOSE 9080
+
 CMD ["/opt/ibm/wlp/bin/server", "run", "defaultServer"]
