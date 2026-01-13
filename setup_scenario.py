@@ -54,9 +54,10 @@ def main():
     # Paso 1: Compilar reviews con Gradle
     print_step(1, "Compilar reviews con Gradle")
     
-    
-    base_path = Path.cwd()
-    reviews_src_path = base_path / "bookinfo" / "src" / "reviews"
+    # Navegar a parte_3/bookinfo como base
+    base_path = Path.cwd() / "parte_3" / "bookinfo"
+    reviews_src_path = base_path / "src" / "reviews"
+    parte_3_path = Path.cwd() / "parte_3"
     if not reviews_src_path.exists():
         print_error(f"La ruta '{reviews_src_path}' no existe")
         return False
@@ -72,7 +73,7 @@ def main():
     # Paso 2: Construir imágenes con docker-compose
     print_step(2, "Construir imágenes Docker con docker-compose")
     
-    if run_command("docker-compose -f docker-compose.micro.yml build", cwd=str(base_path)):
+    if run_command("docker-compose -f docker-compose.micro.yml build", cwd=str(parte_3_path)):
         print_success("Imágenes construidas correctamente")
     else:
         print_error("Error construyendo imágenes")
