@@ -12,7 +12,7 @@ services:
     image: cdps-productpage:g17
     container_name: productpage_cdps_17
     ports:
-      - "8080:8080"
+      - "9080:9080"
     environment:
       - ENABLE_RATINGS=true
       - DETAILS_HOSTNAME=details_cdps_17
