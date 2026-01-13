@@ -75,6 +75,7 @@ services:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
+      - RATINGS_HOSTNAME=ratings_cdps_17
     networks:
       - cdps-net
 
@@ -95,6 +96,7 @@ services:
       - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
+      - RATINGS_HOSTNAME=ratings_cdps_17
     networks:
       - cdps-net
     profiles:
@@ -116,6 +118,7 @@ services:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true
       - STAR_COLOR=red
+      - RATINGS_HOSTNAME=ratings_cdps_17
     networks:
       - cdps-net
     profiles:
