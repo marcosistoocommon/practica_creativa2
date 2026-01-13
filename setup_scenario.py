@@ -51,27 +51,12 @@ def main():
     print("  AUTOMATIZACIÓN - PRACTICA CREATIVA 2")
     print("========================================{Colors.ENDC}\n")
     
-    # Paso 1: Clonar repositorio
-    print_step(1, "Clonar repositorio")
-    repo_url = "https://github.com/marcosistoocommon/practica_creativa2"
-    repo_dir = "practica_creativa2"
+    # Paso 1: Compilar reviews con Gradle
+    print_step(1, "Compilar reviews con Gradle")
     
-    if Path(repo_dir).exists():
-        print_info(f"El directorio '{repo_dir}' ya existe, saltando clonación")
-        print_success("Repositorio disponible")
-    else:
-        if run_command(f"git clone {repo_url} {repo_dir}"):
-            print_success(f"Repositorio clonado en '{repo_dir}'")
-        else:
-            print_error("No se pudo clonar el repositorio")
-            return False
     
-    base_path = Path(repo_dir) / "parte_3"
+    base_path = Path.cwd()
     reviews_src_path = base_path / "bookinfo" / "src" / "reviews"
-    
-    # Paso 2: Compilar reviews con Gradle
-    print_step(2, "Compilar reviews con Gradle")
-    
     if not reviews_src_path.exists():
         print_error(f"La ruta '{reviews_src_path}' no existe")
         return False
@@ -84,8 +69,8 @@ def main():
         print_error("Error compilando reviews")
         return False
     
-    # Paso 3: Construir imágenes con docker-compose
-    print_step(3, "Construir imágenes Docker con docker-compose")
+    # Paso 2: Construir imágenes con docker-compose
+    print_step(2, "Construir imágenes Docker con docker-compose")
     
     if run_command("docker-compose -f docker-compose.micro.yml build", cwd=str(base_path)):
         print_success("Imágenes construidas correctamente")

@@ -66,7 +66,7 @@ services:
       args:
         service_version: v1
         enable_ratings: "true"
-        ratings_hostname: ratings_cdps_17
+        star_color: black
     image: cdps-reviews:g17
     container_name: reviews_v1_cdps_17
     ports:
@@ -74,6 +74,7 @@ services:
     environment:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=true
+      - STAR_COLOR=black
     networks:
       - cdps-net
 
@@ -84,7 +85,8 @@ services:
       args:
         service_version: v2
         enable_ratings: "true"
-        ratings_hostname: ratings_cdps_17
+        star_color: black
+
     image: cdps-reviews:g17
     container_name: reviews_v2_cdps_17
     ports:
@@ -92,6 +94,7 @@ services:
     environment:
       - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
+      - STAR_COLOR=black
     networks:
       - cdps-net
     profiles:
@@ -104,7 +107,7 @@ services:
       args:
         service_version: v3
         enable_ratings: "true"
-        ratings_hostname: ratings_cdps_17
+        star_color: red
     image: cdps-reviews:g17
     container_name: reviews_v3_cdps_17
     ports:
@@ -112,6 +115,7 @@ services:
     environment:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true
+      - STAR_COLOR=red
     networks:
       - cdps-net
     profiles:
