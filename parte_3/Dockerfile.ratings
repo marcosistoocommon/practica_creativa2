@@ -1,18 +1,7 @@
 FROM node:24-slim
-
-WORKDIR /opt/app/
-
-COPY bookinfo/src/ratings/package.json .
-
-RUN npm install --omit=dev
-
-WORKDIR /opt/microservices/
-
-COPY bookinfo/src/ratings .
-
+WORKDIR /opt/microservices
+COPY bookinfo/src/ratings/package.json bookinfo/src/ratings/ratings.js ./
 ENV APP_VERSION=v1
-ENV NODE_PATH=/opt/app/node_modules
-
+RUN npm install 
 EXPOSE 9080
-
-CMD ["node", "ratings.js", "9080"]
+CMD node ratings.js 9080
