@@ -41,23 +41,6 @@ services:
     depends_on:
       - productpage_cdps_17
 
-  ratings_cdps_17:
-    build:
-      context: .
-      dockerfile: Dockerfile.ratings
-    image: cdps-ratings:g17
-    container_name: ratings_cdps_17
-    ports:
-      - "9080"
-    environment:
-      - APP_VERSION=v1
-    volumes:
-      - ./bookinfo/src/ratings:/opt/microservices
-      - /opt/microservices/node_modules
-    networks:
-      - cdps-net
-
-
   reviews_v1_cdps_17:
     build:
       context: ./bookinfo/src/reviews/reviews-wlpcfg
@@ -78,6 +61,8 @@ services:
       - cdps-net
     depends_on:
       - productpage_cdps_17
+    volumes:
+      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
 
 
   reviews_v2_cdps_17:
@@ -103,6 +88,8 @@ services:
       - inactive
     depends_on:
       - productpage_cdps_17
+    volumes:
+      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
 
 
   reviews_v3_cdps_17:
@@ -127,4 +114,24 @@ services:
       - inactive
     depends_on:
       - productpage_cdps_17
+    volumes:
+      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
+
+  ratings_cdps_17:
+    build:
+      context: .
+      dockerfile: Dockerfile.ratings
+    image: cdps-ratings:g17
+    container_name: ratings_cdps_17
+    ports:
+      - "9080"
+    environment:
+      - APP_VERSION=v1
+    volumes:
+      - ./bookinfo/src/ratings:/opt/microservices
+      - /opt/microservices/node_modules
+    networks:
+      - cdps-net
+
+
 
