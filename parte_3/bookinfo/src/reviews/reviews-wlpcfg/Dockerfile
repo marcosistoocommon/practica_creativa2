@@ -10,14 +10,10 @@ RUN /opt/ibm/wlp/bin/installUtility install  --acceptLicense /opt/ibm/wlp/usr/se
 ARG service_version
 ARG enable_ratings
 ARG star_color
-ARG ratings_hostname
-ARG services_domain
 
 ENV SERVICE_VERSION ${service_version:-v1}
 ENV ENABLE_RATINGS ${enable_ratings:-false}
 ENV STAR_COLOR ${star_color:-black}
-ENV RATINGS_HOSTNAME=${ratings_hostname:-ratings}
-ENV SERVICES_DOMAIN=${services_domain:-}
 
 
 CMD ["/opt/ibm/wlp/bin/server", "run", "defaultServer"]
