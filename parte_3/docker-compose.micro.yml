@@ -12,7 +12,7 @@ services:
     image: cdps-productpage:g17
     container_name: productpage_cdps_17
     ports:
-      - "9080:9080"
+      - "9080"
     environment:
       - ENABLE_RATINGS=true
       - DETAILS_HOSTNAME=details_cdps_17
@@ -34,15 +34,13 @@ services:
     image: cdps-details:g17
     container_name: details_cdps_17
     ports:
-      - "7070:7070"
+      - "7070"
     environment:
       - ENABLE_EXTERNAL_BOOK_SERVICE=true
     volumes:
       - ./bookinfo/src/details:/opt/microservices
     networks:
       - cdps-net
-    depends_on:
-      - productpage_cdps_17
 
   ratings_cdps_17:
     build:
@@ -51,19 +49,14 @@ services:
     image: cdps-ratings:g17
     container_name: ratings_cdps_17
     ports:
-      - "9082:9080"
+      - "9080"
     environment:
       - APP_VERSION=v1
     volumes:
       - ./bookinfo/src/ratings:/opt/microservices
     networks:
       - cdps-net
-    expose:
-      - "9080"
-    depends_on:
-      - reviews_v1_cdps_17
-      - reviews_v2_cdps_17
-      - reviews_v3_cdps_17
+
 
   reviews_v1_cdps_17:
     build:
@@ -76,15 +69,14 @@ services:
     image: cdps-reviews-v1:g17
     container_name: reviews_v1_cdps_17
     ports:
-      - "9081:9080"
+      - "9080"
     environment:
       - SERVICE_VERSION=v1
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
     networks:
       - cdps-net
-    depends_on:
-      - productpage_cdps_17
+
 
   reviews_v2_cdps_17:
     build:
@@ -98,7 +90,7 @@ services:
     image: cdps-reviews-v2:g17
     container_name: reviews_v2_cdps_17
     ports:
-      - "9083:9080"
+      - "9080"
     environment:
       - SERVICE_VERSION=v2
       - ENABLE_RATINGS=true
@@ -107,8 +99,7 @@ services:
       - cdps-net
     profiles:
       - inactive
-    depends_on:
-      - productpage_cdps_17
+
 
   reviews_v3_cdps_17:
     build:
@@ -121,7 +112,7 @@ services:
     image: cdps-reviews-v3:g17
     container_name: reviews_v3_cdps_17
     ports:
-      - "9084:9080"
+      - "9080"
     environment:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true
@@ -130,5 +121,4 @@ services:
       - cdps-net
     profiles:
       - inactive
-    depends_on:
-      - productpage_cdps_17
+
