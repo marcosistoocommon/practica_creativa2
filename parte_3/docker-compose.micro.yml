@@ -53,6 +53,7 @@ services:
       - APP_VERSION=v1
     volumes:
       - ./bookinfo/src/ratings:/opt/microservices
+      - /opt/microservices/node_modules
     networks:
       - cdps-net
 
