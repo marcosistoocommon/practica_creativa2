@@ -115,7 +115,6 @@ services:
         service_version: v3
         enable_ratings: "true"
         star_color: red
-    image: cdps-reviews-v3:g17
         ratings_hostname: ratings_cdps_17
     image: cdps-reviews-v3:g17
     container_name: reviews_v3_cdps_17
@@ -125,6 +124,7 @@ services:
       - SERVICE_VERSION=v3
       - ENABLE_RATINGS=true
       - STAR_COLOR=red
+    networks:
       - cdps-net
     profiles:
       - inactive
