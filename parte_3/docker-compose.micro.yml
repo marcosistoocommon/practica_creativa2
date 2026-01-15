@@ -62,7 +62,7 @@ services:
     depends_on:
       - productpage_cdps_17
     volumes:
-      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
+      -  ./bookinfo/src/reviews:/opt/ibm/wlp/usr/servers/defaultServer
 
 
   reviews_v2_cdps_17:
@@ -89,7 +89,7 @@ services:
     depends_on:
       - productpage_cdps_17
     volumes:
-      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
+      -  ./bookinfo/src/reviews:/opt/ibm/wlp/usr/servers/defaultServer
 
 
   reviews_v3_cdps_17:
@@ -115,7 +115,7 @@ services:
     depends_on:
       - productpage_cdps_17
     volumes:
-      - reviews:/opt/ibm/wlp/usr/servers/defaultServer
+      -  ./bookinfo/src/reviews:/opt/ibm/wlp/usr/servers/defaultServer
 
   ratings_cdps_17:
     build:
