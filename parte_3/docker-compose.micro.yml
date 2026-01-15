@@ -22,10 +22,7 @@ services:
       - ./bookinfo/src/productpage:/app
     networks:
       - cdps-net
-    depends_on:
-      - details_cdps_17
-      - ratings_cdps_17
-      - reviews_v1_cdps_17
+
 
   details_cdps_17:
     build:
@@ -41,6 +38,8 @@ services:
       - ./bookinfo/src/details:/opt/microservices
     networks:
       - cdps-net
+    depends_on:
+      - productpage_cdps_17
 
   ratings_cdps_17:
     build:
@@ -76,6 +75,8 @@ services:
       - STAR_COLOR=black
     networks:
       - cdps-net
+    depends_on:
+      - productpage_cdps_17
 
 
   reviews_v2_cdps_17:
@@ -99,6 +100,8 @@ services:
       - cdps-net
     profiles:
       - inactive
+    depends_on:
+      - productpage_cdps_17
 
 
   reviews_v3_cdps_17:
@@ -121,4 +124,6 @@ services:
       - cdps-net
     profiles:
       - inactive
+    depends_on:
+      - productpage_cdps_17
 
