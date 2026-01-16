@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reviews-v1
+  namespace: cdps-17
   labels:
     app: reviews
     version: v1
@@ -19,7 +20,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: <GROUP_NUMBER>/reviews-v1
+        image: 17/reviews-v1
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR

@@ -1,44 +1,44 @@
 ##################################################################################################
-# Ratings service
+# Details service
 ##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
-  name: ratings-service
+  name: details-service
   namespace: cdps-17
   labels:
-    app: ratings
-    service: ratings
+    app: details
+    service: details
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: ratings
+    app: details
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ratings-v1
+  name: details-v1
   namespace: cdps-17
   labels:
-    app: ratings
+    app: details
     version: v1
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
-      app: ratings
+      app: details
       version: v1
   template:
     metadata:
       labels:
-        app: ratings
+        app: details
         version: v1
     spec:
       containers:
-      - name: ratings
-        image: 17/ratings
+      - name: details
+        image: 17/details
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080

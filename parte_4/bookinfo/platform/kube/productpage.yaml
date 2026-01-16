@@ -1,47 +1,56 @@
 ##################################################################################################
-# Ratings service
+# Productpage service
 ##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
-  name: ratings-service
+  name: productpage-service
   namespace: cdps-17
   labels:
-    app: ratings
-    service: ratings
+    app: productpage
+    service: productpage
 spec:
+  type: LoadBalancer
   ports:
   - port: 9080
     name: http
+    targetPort: 9080
   selector:
-    app: ratings
+    app: productpage
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ratings-v1
+  name: productpage-v1
   namespace: cdps-17
   labels:
-    app: ratings
+    app: productpage
     version: v1
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: ratings
+      app: productpage
       version: v1
   template:
     metadata:
       labels:
-        app: ratings
+        app: productpage
         version: v1
     spec:
       containers:
-      - name: ratings
-        image: 17/ratings
+      - name: productpage
+        image: 17/productpage
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
+        env:
+        - name: DETAILS_HOSTNAME
+          value: "details-service"
+        - name: REVIEWS_HOSTNAME
+          value: "reviews-service"
+        - name: RATINGS_HOSTNAME
+          value: "ratings-service"
         securityContext:
           runAsUser: 1000
 ---

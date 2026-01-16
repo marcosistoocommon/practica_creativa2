@@ -1,18 +1,9 @@
 ##################################################################################################
-# Reviews service
+# Namespace para el proyecto
 ##################################################################################################
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: reviews-service
-  namespace: cdps-17
+  name: cdps-17
   labels:
-    app: reviews
-    service: reviews
-spec:
-  ports:
-  - port: 9080
-    name: http
-  selector:
-    app: reviews
----
+    name: cdps-17
