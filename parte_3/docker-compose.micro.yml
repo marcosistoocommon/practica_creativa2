@@ -75,7 +75,6 @@ services:
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
       - RATINGS_HOSTNAME=ratings_cdps_17
-      - SERVICES_DOMAIN=
     networks:
       - cdps-net
     depends_on:
@@ -99,7 +98,6 @@ services:
       - ENABLE_RATINGS=true
       - STAR_COLOR=black
       - RATINGS_HOSTNAME=ratings_cdps_17
-      - SERVICES_DOMAIN=
     networks:
       - cdps-net
     profiles:
@@ -125,8 +123,6 @@ services:
       - ENABLE_RATINGS=true
       - STAR_COLOR=red
       - RATINGS_HOSTNAME=ratings_cdps_17
-      - SERVICES_DOMAIN==true
-      - STAR_COLOR=red
     networks:
       - cdps-net
     profiles:
