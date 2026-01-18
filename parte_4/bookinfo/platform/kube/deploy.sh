@@ -12,6 +12,7 @@
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
@@ -108,11 +109,33 @@ kubectl get deployments -n cdps-17
 
 # Obtener la IP externa del servicio productpage
 echo -e "\n${BLUE}========================================${NC}"
-echo -e "${BLUE}Obteniendo IP externa...${NC}"
+echo -e "${BLUE}Comprobando EXTERNAL-IP del servicio...${NC}"
 echo -e "${BLUE}========================================${NC}"
-echo -e "${GREEN}Para acceder a la aplicación, espera a que el LoadBalancer asigne una IP externa:${NC}"
-echo -e "${GREEN}kubectl get svc productpage-service -n cdps-17${NC}"
-echo -e "\n${GREEN}Una vez que tengas la EXTERNAL-IP, accede a: http://<EXTERNAL-IP>:9080${NC}"
+
+# Esperar hasta 2 minutos por una EXTERNAL-IP si hay LoadBalancer disponible
+EXTERNAL_IP=""
+for i in {1..24}; do
+    EXTERNAL_IP=$(kubectl -n cdps-17 get svc productpage-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+    if [ -n "$EXTERNAL_IP" ]; then
+        echo -e "${GREEN}EXTERNAL-IP disponible: ${EXTERNAL_IP}${NC}"
+        echo -e "${GREEN}Accede a: http://${EXTERNAL_IP}:9080${NC}"
+        break
+    fi
+    echo -e "${BLUE}Esperando EXTERNAL-IP... (${i}/24)${NC}"
+    sleep 5
+done
+
+# Si no hay EXTERNAL-IP (entornos bare-metal como Play with Kubernetes), usar NodePort
+if [ -z "$EXTERNAL_IP" ]; then
+    echo -e "${YELLOW}No se asignó EXTERNAL-IP. Cambiando servicio a NodePort...${NC}"
+    # Cambiar el tipo a NodePort y fijar un puerto estable si es posible
+    kubectl -n cdps-17 patch svc productpage-service -p '{"spec":{"type":"NodePort"}}' >/dev/null 2>&1 || true
+    kubectl -n cdps-17 patch svc productpage-service -p '{"spec":{"type":"NodePort","ports":[{"port":9080,"targetPort":9080,"protocol":"TCP","nodePort":30080}]}}' >/dev/null 2>&1 || true
+    NODE_PORT=$(kubectl -n cdps-17 get svc productpage-service -o jsonpath='{.spec.ports[0].nodePort}')
+    NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+    echo -e "${GREEN}Servicio expuesto como NodePort en ${NODE_IP}:${NODE_PORT}${NC}"
+    echo -e "${GREEN}En Play with Kubernetes, abre el puerto ${NODE_PORT} en la UI y accede a: http://<public-node-ip>:${NODE_PORT}${NC}"
+fi
 
 echo -e "\n${BLUE}========================================${NC}"
 echo -e "${BLUE}Despliegue completado!${NC}"
