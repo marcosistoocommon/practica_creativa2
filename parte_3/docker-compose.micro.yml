@@ -6,7 +6,9 @@ networks:
 
 services:
   productpage:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.productpage
     image: cdps-productpage:g17
     container_name: productpage_cdps_17
     ports:
@@ -23,7 +25,9 @@ services:
 
 
   details:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.details
     image: cdps-details:g17
     container_name: details_cdps_17
     ports:
@@ -38,7 +42,9 @@ services:
       - productpage
 
   ratings:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.ratings
     image: cdps-ratings:g17
     container_name: ratings_cdps_17
     ports:
