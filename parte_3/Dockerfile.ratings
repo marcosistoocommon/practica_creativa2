@@ -1,7 +1,7 @@
 FROM node:24-slim
 WORKDIR /opt/microservices
 COPY bookinfo/src/ratings/ .
-RUN npm install --omit=dev
 ENV APP_VERSION=v1
+RUN npm install --omit=dev
 EXPOSE 9080
 CMD ["node", "ratings.js", "9080"]
