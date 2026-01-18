@@ -6,6 +6,7 @@ networks:
 
 services:
   productpage:
+    build: .
     image: cdps-productpage:g17
     container_name: productpage_cdps_17
     ports:
@@ -22,6 +23,7 @@ services:
 
 
   details:
+    build: .
     image: cdps-details:g17
     container_name: details_cdps_17
     ports:
@@ -36,6 +38,7 @@ services:
       - productpage
 
   ratings:
+    build: .
     image: cdps-ratings:g17
     container_name: ratings_cdps_17
     ports:
