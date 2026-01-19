@@ -25,25 +25,70 @@ if ! command -v kubectl &> /dev/null; then
     exit 1
 fi
 
-# 0. Inicializar el cluster de Kubernetes
-echo -e "\n${GREEN}[0/11] Inicializando cluster master node...${NC}"
-if ! kubectl cluster-info &> /dev/null; then
-    echo -e "${BLUE}Ejecutando kubeadm init...${NC}"
-    kubeadm init --apiserver-advertise-address $(hostname -i) --pod-network-cidr 10.5.0.0/16
+# Detectar si estamos en Minikube
+IS_MINIKUBE=false
+if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
+    IS_MINIKUBE=true
+    echo -e "${GREEN}Detectado entorno Minikube${NC}"
     
-    # Configurar kubeconfig
-    echo -e "${BLUE}Configurando kubeconfig...${NC}"
-    mkdir -p $HOME/.kube
-    cp /etc/kubernetes/admin.conf $HOME/.kube/config
-    chown $(id -u):$(id -g) $HOME/.kube/config
+    # Construir imágenes dentro de Minikube
+    echo -e "\n${BLUE}========================================${NC}"
+    echo -e "${BLUE}Construyendo imágenes en Minikube...${NC}"
+    echo -e "${BLUE}========================================${NC}"
     
-    # Instalar kube-router para networking
-    echo -e "${BLUE}Instalando kube-router (CNI)...${NC}"
-    kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml
+    # Configurar entorno Docker de Minikube
+    eval $(minikube docker-env)
     
-    # Esperar a que el cluster esté listo
-    echo -e "${BLUE}Esperando a que el cluster esté listo...${NC}"
-    sleep 10
+    # Navegar a la carpeta de código fuente
+    cd ../../../..
+    
+    echo -e "${GREEN}Construyendo imagen productpage...${NC}"
+    docker build -f Dockerfile.productpage -t 17/productpage . 2>&1 | grep -v "^DEPRECATED"
+    
+    echo -e "${GREEN}Construyendo imagen details...${NC}"
+    docker build -f Dockerfile.details -t 17/details . 2>&1 | grep -v "^DEPRECATED"
+    
+    echo -e "${GREEN}Construyendo imagen ratings...${NC}"
+    docker build -f Dockerfile.ratings -t 17/ratings . 2>&1 | grep -v "^DEPRECATED"
+    
+    echo -e "${GREEN}Construyendo imágenes de reviews (esto puede tardar)...${NC}"
+    cd bookinfo/src/reviews
+    if [ ! -f "reviews-application/build/libs/reviews-application-1.0.war" ]; then
+        echo -e "${BLUE}Compilando aplicación Java con Gradle...${NC}"
+        gradle clean build 2>&1 | tail -5
+    fi
+    cd ../../..
+    
+    echo -e "${GREEN}Construyendo reviews v1, v2, v3...${NC}"
+    docker build -t 17/reviews --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg 2>&1 | grep -v "^DEPRECATED"
+    
+    # Volver a la carpeta de kube
+    cd platform/kube
+    
+    echo -e "${GREEN}✓ Imágenes construidas exitosamente${NC}"
+fi
+
+# 0. Inicializar el cluster de Kubernetes (solo para Play with Kubernetes)
+if [ "$IS_MINIKUBE" = false ]; then
+    echo -e "\n${GREEN}[0/11] Verificando cluster...${NC}"
+    if ! kubectl cluster-info &> /dev/null; then
+        echo -e "${BLUE}Ejecutando kubeadm init...${NC}"
+        kubeadm init --apiserver-advertise-address $(hostname -i) --pod-network-cidr 10.5.0.0/16
+        
+        # Configurar kubeconfig
+        echo -e "${BLUE}Configurando kubeconfig...${NC}"
+        mkdir -p $HOME/.kube
+        cp /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+        
+        # Instalar kube-router para networking
+        echo -e "${BLUE}Instalando kube-router (CNI)...${NC}"
+        kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml
+        
+        # Esperar a que el cluster esté listo
+        echo -e "${BLUE}Esperando a que el cluster esté listo...${NC}"
+        sleep 10
+    fi
 fi
 
 # Verificar que el cluster está disponible
@@ -107,36 +152,3 @@ kubectl get services -n cdps-17
 echo -e "\n${GREEN}Deployments:${NC}"
 kubectl get deployments -n cdps-17
 
-# Obtener la IP externa del servicio productpage
-echo -e "\n${BLUE}========================================${NC}"
-echo -e "${BLUE}Comprobando EXTERNAL-IP del servicio...${NC}"
-echo -e "${BLUE}========================================${NC}"
-
-# Esperar hasta 2 minutos por una EXTERNAL-IP si hay LoadBalancer disponible
-EXTERNAL_IP=""
-for i in {1..24}; do
-    EXTERNAL_IP=$(kubectl -n cdps-17 get svc productpage-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-    if [ -n "$EXTERNAL_IP" ]; then
-        echo -e "${GREEN}EXTERNAL-IP disponible: ${EXTERNAL_IP}${NC}"
-        echo -e "${GREEN}Accede a: http://${EXTERNAL_IP}:9080${NC}"
-        break
-    fi
-    echo -e "${BLUE}Esperando EXTERNAL-IP... (${i}/24)${NC}"
-    sleep 5
-done
-
-# Si no hay EXTERNAL-IP (entornos bare-metal como Play with Kubernetes), usar NodePort
-if [ -z "$EXTERNAL_IP" ]; then
-    echo -e "${YELLOW}No se asignó EXTERNAL-IP. Cambiando servicio a NodePort...${NC}"
-    # Cambiar el tipo a NodePort y fijar un puerto estable si es posible
-    kubectl -n cdps-17 patch svc productpage-service -p '{"spec":{"type":"NodePort"}}' >/dev/null 2>&1 || true
-    kubectl -n cdps-17 patch svc productpage-service -p '{"spec":{"type":"NodePort","ports":[{"port":9080,"targetPort":9080,"protocol":"TCP","nodePort":30080}]}}' >/dev/null 2>&1 || true
-    NODE_PORT=$(kubectl -n cdps-17 get svc productpage-service -o jsonpath='{.spec.ports[0].nodePort}')
-    NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-    echo -e "${GREEN}Servicio expuesto como NodePort en ${NODE_IP}:${NODE_PORT}${NC}"
-    echo -e "${GREEN}En Play with Kubernetes, abre el puerto ${NODE_PORT} en la UI y accede a: http://<public-node-ip>:${NODE_PORT}${NC}"
-fi
-
-echo -e "\n${BLUE}========================================${NC}"
-echo -e "${BLUE}Despliegue completado!${NC}"
-echo -e "${BLUE}========================================${NC}"
