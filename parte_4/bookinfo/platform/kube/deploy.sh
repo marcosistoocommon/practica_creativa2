@@ -60,12 +60,14 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     # Compilar con Gradle usando contenedor si no existe gradle localmente
     if [ ! -f "reviews-application/build/libs/reviews-application-1.0.war" ]; then
         echo -e "${BLUE}Compilando aplicación Java con Gradle...${NC}"
+        cd reviews-application
         if command -v gradle &> /dev/null; then
             gradle clean build
         else
             echo -e "${YELLOW}Gradle no instalado, usando contenedor Docker...${NC}"
             docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build
         fi
+        cd ..
     fi
     
     cd ../../..
