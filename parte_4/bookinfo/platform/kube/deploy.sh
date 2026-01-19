@@ -19,6 +19,9 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Inicializando y desplegando Bookinfo${NC}"
 echo -e "${BLUE}========================================${NC}"
 
+# Guardar el directorio actual (parte_4/bookinfo/platform/kube)
+SCRIPT_DIR="$(pwd)"
+
 # Verificar que kubectl está instalado
 if ! command -v kubectl &> /dev/null; then
     echo -e "${RED}Error: kubectl no está instalado${NC}"
@@ -39,31 +42,39 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     # Configurar entorno Docker de Minikube
     eval $(minikube docker-env)
     
-    # Navegar a la carpeta de código fuente
-    cd ../../../..
+    # Navegar a parte_3 (donde están los Dockerfiles)
+    cd "$SCRIPT_DIR/../../../parte_3" || { echo -e "${RED}Error: No se encuentra parte_3${NC}"; exit 1; }
     
     echo -e "${GREEN}Construyendo imagen productpage...${NC}"
-    docker build -f Dockerfile.productpage -t 17/productpage . 2>&1 | grep -v "^DEPRECATED"
+    docker build -f Dockerfile.productpage -t 17/productpage . || { echo -e "${RED}Error construyendo productpage${NC}"; }
     
     echo -e "${GREEN}Construyendo imagen details...${NC}"
-    docker build -f Dockerfile.details -t 17/details . 2>&1 | grep -v "^DEPRECATED"
+    docker build -f Dockerfile.details -t 17/details . || { echo -e "${RED}Error construyendo details${NC}"; }
     
     echo -e "${GREEN}Construyendo imagen ratings...${NC}"
-    docker build -f Dockerfile.ratings -t 17/ratings . 2>&1 | grep -v "^DEPRECATED"
+    docker build -f Dockerfile.ratings -t 17/ratings . || { echo -e "${RED}Error construyendo ratings${NC}"; }
     
     echo -e "${GREEN}Construyendo imágenes de reviews (esto puede tardar)...${NC}"
     cd bookinfo/src/reviews
+    
+    # Compilar con Gradle usando contenedor si no existe gradle localmente
     if [ ! -f "reviews-application/build/libs/reviews-application-1.0.war" ]; then
         echo -e "${BLUE}Compilando aplicación Java con Gradle...${NC}"
-        gradle clean build 2>&1 | tail -5
+        if command -v gradle &> /dev/null; then
+            gradle clean build
+        else
+            echo -e "${YELLOW}Gradle no instalado, usando contenedor Docker...${NC}"
+            docker run --rm -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build
+        fi
     fi
+    
     cd ../../..
     
-    echo -e "${GREEN}Construyendo reviews v1, v2, v3...${NC}"
-    docker build -t 17/reviews --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg 2>&1 | grep -v "^DEPRECATED"
+    echo -e "${GREEN}Construyendo reviews...${NC}"
+    docker build -t 17/reviews --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews${NC}"; }
     
-    # Volver a la carpeta de kube
-    cd platform/kube
+    # Volver al directorio del script
+    cd "$SCRIPT_DIR"
     
     echo -e "${GREEN}✓ Imágenes construidas exitosamente${NC}"
 fi
