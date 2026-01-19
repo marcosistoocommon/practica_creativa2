@@ -19,8 +19,10 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Inicializando y desplegando Bookinfo${NC}"
 echo -e "${BLUE}========================================${NC}"
 
-# Guardar el directorio actual (parte_4/bookinfo/platform/kube)
-SCRIPT_DIR="$(pwd)"
+# Guardar el directorio del script (absoluto)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directorio raíz de parte_4
+PARTE4_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 # Verificar que kubectl está instalado
 if ! command -v kubectl &> /dev/null; then
@@ -43,7 +45,7 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     eval $(minikube docker-env)
     
     # Navegar a la raíz de parte_4 (donde están los Dockerfiles)
-    cd "$SCRIPT_DIR/../../.." || { echo -e "${RED}Error: No se encuentra la raíz de parte_4${NC}"; exit 1; }
+    cd "$PARTE4_DIR" || { echo -e "${RED}Error: No se encuentra la raíz de parte_4${NC}"; exit 1; }
     
     echo -e "${GREEN}Construyendo imagen productpage...${NC}"
     docker build -f Dockerfile.productpage -t 17/productpage . || { echo -e "${RED}Error construyendo productpage${NC}"; }
@@ -55,7 +57,7 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     docker build -f Dockerfile.ratings -t 17/ratings . || { echo -e "${RED}Error construyendo ratings${NC}"; }
     
     echo -e "${GREEN}Construyendo imágenes de reviews (esto puede tardar)...${NC}"
-    cd bookinfo/src/reviews
+    cd "$PARTE4_DIR/bookinfo/src/reviews"
     
     # Compilar con Gradle usando contenedor
     if [ ! -f "reviews-application/build/libs/reviews-application-1.0.war" ]; then
@@ -68,7 +70,7 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
         fi
     fi
     
-    cd ../../..
+    cd "$PARTE4_DIR"
     
     echo -e "${GREEN}Construyendo reviews v1/v2/v3...${NC}"
     docker build -t 17/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews v1${NC}"; }
