@@ -162,4 +162,3 @@ kubectl get services -n cdps-17
 # Mostrar deployments
 echo -e "\n${GREEN}Deployments:${NC}"
 kubectl get deployments -n cdps-17
-
