@@ -3,7 +3,7 @@
 SCRIPT_DIR="$(pwd)"
 
 eval $(minikube docker-env)
-cd "$SCRIPT_DIR/../../.." 
+
 docker build -f Dockerfile.productpage -t 17/productpage . 
 docker build -f Dockerfile.details -t 17/details . 
 docker build -f Dockerfile.ratings -t 17/ratings . 
