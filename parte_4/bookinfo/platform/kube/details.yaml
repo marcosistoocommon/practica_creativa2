@@ -8,7 +8,7 @@ metadata:
     service: details
 spec:
   ports:
-  - port: 9080
+  - port: 7070
     name: http
   selector:
     app: details
