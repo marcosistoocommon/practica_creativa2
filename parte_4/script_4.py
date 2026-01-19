@@ -5,6 +5,7 @@ import subprocess, os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 kube_dir = os.path.join(script_dir, "bookinfo/platform/kube")
 
+subprocess.run("eval $(minikube docker-env)", shell=True)
 # Build Gradle (Reviews)
 os.chdir(os.path.join(script_dir, "bookinfo/src/reviews"))
 subprocess.run(f"docker run --rm -u root -v {os.getcwd()}:/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build", shell=True)
