@@ -15,7 +15,7 @@ docker build -f Dockerfile.details -t 17/details .
 docker build -f Dockerfile.ratings -t 17/ratings . 
 
 # Build reviews with Gradle
-docker run --rm -u root -v "$REVIEWS_DIR":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build
+docker run --rm -u root -v "$REVIEWS_DIR":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle :reviews-wlpcfg:build
 
 docker build -t 17/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg 
 docker build -t 17/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg 
