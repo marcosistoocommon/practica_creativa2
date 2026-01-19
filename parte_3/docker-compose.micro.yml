@@ -38,8 +38,7 @@ services:
       - ./bookinfo/src/details:/opt/microservices
     networks:
       - cdps-net
-    depends_on:
-      - productpage
+
 
   ratings:
     build:
