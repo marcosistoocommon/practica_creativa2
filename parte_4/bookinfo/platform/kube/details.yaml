@@ -38,7 +38,7 @@ spec:
         image: 17/details
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9080
+        - containerPort: 7070
         securityContext:
           runAsUser: 1000
 ---
