@@ -15,7 +15,7 @@ cd ../../..
 docker build -t 17/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg 
 docker build -t 17/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg 
 docker build -t 17/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg 
-cd "$SCRIPT_DIR"
+cd bookinfo/platform/kube
 
 
 kubectl apply -f cdps-namespace.yaml
