@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY bookinfo/src/productpage/ ./
 
 EXPOSE 8080
-ENV TEAM_ID ${TEAM_ID:-17}
-ENV APP_OWNER ${APP_OWNER:-Perez-et-al}
 
-CMD python3 productpage_monolith.py 8080
+
+CMD ["python3", "productpage_monolith.py", "8080"]
