@@ -18,14 +18,14 @@ docker build -t 17/reviews-v3 --build-arg service_version=v3 --build-arg enable_
 cd bookinfo/platform/kube
 
 
-kubectl apply -f cdps-namespace.yaml
+kubectl apply --validate=false -f cdps-namespace.yaml
 
-kubectl apply -f details.yaml
-kubectl apply -f ratings.yaml
-kubectl apply -f reviews-svc.yaml
-kubectl apply -f reviews-v1-deployment.yaml
-kubectl apply -f reviews-v2-deployment.yaml
-kubectl apply -f reviews-v3-deployment.yaml
-kubectl apply -f productpage.yaml
+kubectl apply --validate=false -f details.yaml
+kubectl apply --validate=false -f ratings.yaml
+kubectl apply --validate=false -f reviews-svc.yaml
+kubectl apply --validate=false -f reviews-v1-deployment.yaml
+kubectl apply --validate=false -f reviews-v2-deployment.yaml
+kubectl apply --validate=false -f reviews-v3-deployment.yaml
+kubectl apply --validate=false -f productpage.yaml
 
 kubectl port-forward --address=0.0.0.0 -n cdps-17 svc/productpage-service 9080:9080
