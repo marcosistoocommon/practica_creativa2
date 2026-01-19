@@ -42,8 +42,8 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     # Configurar entorno Docker de Minikube
     eval $(minikube docker-env)
     
-    # Navegar a parte_3 (donde están los Dockerfiles)
-    cd "$SCRIPT_DIR/../../../parte_3" || { echo -e "${RED}Error: No se encuentra parte_3${NC}"; exit 1; }
+    # Navegar a la raíz de parte_4 (donde están los Dockerfiles)
+    cd "$SCRIPT_DIR/../../.." || { echo -e "${RED}Error: No se encuentra la raíz de parte_4${NC}"; exit 1; }
     
     echo -e "${GREEN}Construyendo imagen productpage...${NC}"
     docker build -f Dockerfile.productpage -t 17/productpage . || { echo -e "${RED}Error construyendo productpage${NC}"; }
