@@ -11,4 +11,4 @@ EXPOSE 8080
 ENV TEAM_ID ${TEAM_ID:-17}
 ENV APP_OWNER ${APP_OWNER:-Perez-et-al}
 
-CMD python3 productpage.py 8080
+CMD python3 productpage_monolith.py 8080
