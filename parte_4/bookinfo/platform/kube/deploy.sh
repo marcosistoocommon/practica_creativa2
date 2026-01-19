@@ -65,7 +65,7 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
         else
             echo -e "${YELLOW}Gradle no instalado, usando contenedor Docker...${NC}"
             docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build
-
+        fi
     fi
     
     cd ../../..
