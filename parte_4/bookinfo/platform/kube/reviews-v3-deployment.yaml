@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reviews-v3
-  namespace: cdps-17
   labels:
     app: reviews
     version: v3

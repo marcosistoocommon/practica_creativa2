@@ -1,6 +1,3 @@
-##################################################################################################
-# Productpage service
-##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
@@ -44,13 +41,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
-        env:
-        - name: DETAILS_HOSTNAME
-          value: "details-service"
-        - name: REVIEWS_HOSTNAME
-          value: "reviews-service"
-        - name: RATINGS_HOSTNAME
-          value: "ratings-service"
         securityContext:
           runAsUser: 1000
 ---

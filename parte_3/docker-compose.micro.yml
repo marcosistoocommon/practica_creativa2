@@ -13,11 +13,6 @@ services:
     container_name: productpage_cdps_17
     ports:
       - "9080:9080"
-    environment:
-      - ENABLE_RATINGS=true
-      - DETAILS_HOSTNAME=details
-      - RATINGS_HOSTNAME=ratings
-      - REVIEWS_HOSTNAME=reviews
     volumes:
       - ./bookinfo/src/productpage:/app
     networks:
