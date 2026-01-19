@@ -57,23 +57,23 @@ if kubectl config current-context 2>/dev/null | grep -q "minikube"; then
     echo -e "${GREEN}Construyendo imágenes de reviews (esto puede tardar)...${NC}"
     cd bookinfo/src/reviews
     
-    # Compilar con Gradle usando contenedor si no existe gradle localmente
+    # Compilar con Gradle usando contenedor
     if [ ! -f "reviews-application/build/libs/reviews-application-1.0.war" ]; then
         echo -e "${BLUE}Compilando aplicación Java con Gradle...${NC}"
-        cd reviews-application
         if command -v gradle &> /dev/null; then
             gradle clean build
         else
             echo -e "${YELLOW}Gradle no instalado, usando contenedor Docker...${NC}"
             docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build
         fi
-        cd ..
     fi
     
     cd ../../..
     
-    echo -e "${GREEN}Construyendo reviews...${NC}"
-    docker build -t 17/reviews --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews${NC}"; }
+    echo -e "${GREEN}Construyendo reviews v1/v2/v3...${NC}"
+    docker build -t 17/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews v1${NC}"; }
+    docker build -t 17/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews v2${NC}"; }
+    docker build -t 17/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg || { echo -e "${RED}Error construyendo reviews v3${NC}"; }
     
     # Volver al directorio del script
     cd "$SCRIPT_DIR"
