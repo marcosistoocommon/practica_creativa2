@@ -35,6 +35,14 @@ elif cmd == "build":
     subprocess.run("sudo docker build -f Dockerfile.productpage -t 17/productpage .", shell=True)
     subprocess.run("sudo docker build -f Dockerfile.ratings -t 17/ratings .", shell=True)
     subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
+    
+    # Load images into Minikube
+    subprocess.run("sudo minikube image load 17/productpage", shell=True)
+    subprocess.run("sudo minikube image load 17/ratings", shell=True)
+    subprocess.run("sudo minikube image load 17/details", shell=True)
+    subprocess.run("sudo minikube image load 17/reviews-v1", shell=True)
+    subprocess.run("sudo minikube image load 17/reviews-v2", shell=True)
+    subprocess.run("sudo minikube image load 17/reviews-v3", shell=True)
 
 elif cmd == "run":
     subprocess.run("sudo minikube update-context", shell=True)
