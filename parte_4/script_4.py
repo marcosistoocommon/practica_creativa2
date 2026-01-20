@@ -10,6 +10,10 @@ if len(sys.argv) < 2:
 cmd = sys.argv[1].lower()
 
 if cmd == "install":
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
+    subprocess.run("sudo systemctl enable docker", shell=True)
+    subprocess.run("sudo systemctl restart docker || true", shell=True)
     subprocess.run("sudo snap install kubectl --classic", shell=True)
     subprocess.run("wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 -O minikube", shell=True)
     subprocess.run("chmod 755 minikube ", shell=True)
