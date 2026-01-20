@@ -16,7 +16,7 @@ if cmd == "install":
     subprocess.run("sudo apt-get update -y", shell=True)
     subprocess.run("sudo apt-get install -y docker.io", shell=True)
     subprocess.run("sudo usermod -aG docker $USER", shell=True)
-    subprocess.run("gcloud auth application-default login --quiet 2>/dev/null || true", shell=True)
+    subprocess.run("gcloud auth application-default print-access-token >/dev/null 2>&1 || true", shell=True)
     subprocess.run(f"gcloud config set project {PROJECT_ID}", shell=True)
     subprocess.run(f"gcloud container clusters create {CLUSTER_NAME} --num-nodes=3 --zone={ZONE} --no-enable-autoscaling", shell=True)
     subprocess.run(f"gcloud container clusters get-credentials {CLUSTER_NAME} --zone={ZONE}", shell=True)
