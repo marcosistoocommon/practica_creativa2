@@ -4,7 +4,7 @@ import sys
 
 
 if len(sys.argv) < 2:
-    print("Usage: python script_2.py [build|run|stop]")
+    print("Usage: python script_2.py [build|run|stop|delete]")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
@@ -17,6 +17,8 @@ elif cmd == "run":
 elif cmd == "stop":
     subprocess.run("sudo docker stop productpage_cdps_17", shell=True)
     subprocess.run("sudo docker rm productpage_cdps_17", shell=True)
+elif cmd == "delete":
+    subprocess.run("sudo docker rm -f productpage_cdps_17", shell=True)
 else:
-    print("Invalid command. Use: build, run, or stop")
+    print("Invalid command. Use: build, run, stop, or delete")
     sys.exit(1)

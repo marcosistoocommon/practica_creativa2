@@ -4,7 +4,7 @@ import sys
 
 
 if len(sys.argv) < 2:
-    print("Usage: python script_2.py [build|run|stop|debug]")
+    print("Usage: python script_2.py [build|run|stop|debug]|delete")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
@@ -27,3 +27,9 @@ elif cmd == "stop":
 
 elif cmd == "debug":
     subprocess.run("sudo docker compose -f docker-compose.micro.yml up", shell=True)
+
+elif cmd == "delete":
+    subprocess.run("sudo docker compose -f docker-compose.micro.yml down --rmi all", shell=True)
+else:
+    print("Invalid command. Use: build, run, stop, debug, or delete")
+    sys.exit(1)
