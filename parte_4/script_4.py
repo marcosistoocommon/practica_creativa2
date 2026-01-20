@@ -14,7 +14,10 @@ cmd = sys.argv[1].lower()
 
 if cmd == "install":
     subprocess.run("sudo apt-get update -y", shell=True)
-    subprocess.run("sudo apt-get install -y docker.io", shell=True)
+    res = subprocess.run("sudo apt-get install -y docker.io", shell=True)
+    if res.returncode != 0:
+        subprocess.run("sudo apt-get remove -y containerd.io || true", shell=True)
+        subprocess.run("sudo apt-get install -y containerd docker.io", shell=True)
     subprocess.run("sudo usermod -aG docker $USER", shell=True)
 
 elif cmd == "build":
