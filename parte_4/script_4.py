@@ -32,6 +32,14 @@ if cmd == "install":
         subprocess.run("curl https://sdk.cloud.google.com | bash", shell=True)
         subprocess.run("exec -l $SHELL", shell=True)
 
+    # Install minikube if not present
+    probe = subprocess.run("which minikube > /dev/null 2>&1", shell=True)
+    if probe.returncode != 0:
+        subprocess.run("sudo apt-get install -y conntrack", shell=True)
+        subprocess.run("curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
+        subprocess.run("sudo install minikube /usr/local/bin/minikube", shell=True)
+        subprocess.run("rm minikube", shell=True)
+
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
     pwd = os.getcwd()
@@ -46,12 +54,7 @@ elif cmd == "build":
     subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
 
 elif cmd == "run":
-    # wait for API server to be reachable
-    for _ in range(30):
-        probe = subprocess.run("kubectl cluster-info > /dev/null 2>&1", shell=True)
-        if probe.returncode == 0:
-            break
-        time.sleep(2)
+
     os.chdir("bookinfo/platform/kube")
     subprocess.run("kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f details.yaml", shell=True)
