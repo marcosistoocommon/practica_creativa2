@@ -1,7 +1,22 @@
 #!/usr/bin/env python
 import subprocess, os
+import sys
 
-subprocess.run("sudo apt install -y podman-docker", shell=True)
 
-subprocess.run("sudo docker build -t cdps-productpage:g17 .", shell=True)
-subprocess.run("sudo docker run --name productpage_cdps_17 -p 9095:8080 -e TEAM_ID=17 -e APP_OWNER=Perez-et-al -d cdps-productpage:g17", shell=True)
+if len(sys.argv) < 2:
+    print("Usage: python script_2.py [build|run|stop]")
+    sys.exit(1)
+
+cmd = sys.argv[1].lower()
+
+if cmd == "build":
+    subprocess.run("sudo apt install -y podman-docker", shell=True)
+    subprocess.run("sudo docker build -t cdps-productpage:g17 .", shell=True)
+elif cmd == "run":
+    subprocess.run("sudo docker run --name productpage_cdps_17 -p 9095:8080 -e TEAM_ID=17 -e APP_OWNER=Perez-et-al -d cdps-productpage:g17", shell=True)
+elif cmd == "stop":
+    subprocess.run("sudo docker stop productpage_cdps_17", shell=True)
+    subprocess.run("sudo docker rm productpage_cdps_17", shell=True)
+else:
+    print("Invalid command. Use: build, run, or stop")
+    sys.exit(1)
