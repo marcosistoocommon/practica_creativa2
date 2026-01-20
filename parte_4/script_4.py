@@ -28,7 +28,7 @@ subprocess.run("sudo docker build -f Dockerfile.productpage -t 17/productpage ."
 subprocess.run("sudo docker build -f Dockerfile.ratings -t 17/ratings .", shell=True)
 subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
 
-os.chdir("../../parte_4/bookinfo/platform/kube")
+os.chdir("bookinfo/platform/kube")
 
 subprocess.run("kubectl apply -f cdps-namespace.yaml", shell=True)
 subprocess.run("kubectl apply -f details.yaml", shell=True)
