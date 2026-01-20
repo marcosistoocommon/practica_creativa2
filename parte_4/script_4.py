@@ -18,6 +18,15 @@ if cmd == "install":
 
 
     subprocess.run("sudo snap install kubectl --classic", shell=True)
+    # Install CNI plugins (v1.9.0)
+    subprocess.run("export CNI_PLUGIN_VERSION=1.9.0", shell=True)
+    subprocess.run("export CNI_PLUGIN_TAR=\"cni-plugins-linux-amd64-$CNI_PLUGIN_VERSION.tgz\"", shell=True)
+    subprocess.run("export CNI_PLUGIN_INSTALL_DIR=/opt/cni/bin", shell=True)
+    subprocess.run("curl -LO \"https://github.com/containernetworking/plugins/releases/download/$CNI_PLUGIN_VERSION/$CNI_PLUGIN_TAR\"", shell=True)
+    subprocess.run("sudo mkdir -p /opt/cni/bin", shell=True)
+    subprocess.run("sudo tar -xf $CNI_PLUGIN_TAR -C /opt/cni/bin", shell=True)
+    subprocess.run("rm $CNI_PLUGIN_TAR", shell=True)
+
     subprocess.run("wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 -O minikube", shell=True)
     subprocess.run("chmod 755 minikube ", shell=True)
     subprocess.run("sudo mv minikube /usr/local/bin/", shell=True)
