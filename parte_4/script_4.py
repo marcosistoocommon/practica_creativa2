@@ -4,7 +4,7 @@ import sys
 import time
 
 if len(sys.argv) < 2:
-    print("Usage: python script_4.py [install|build|run|watch|stop|delete]")
+    print("Usage: python script_4.py [install|build|run|stop|delete]")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
@@ -48,14 +48,6 @@ elif cmd == "run":
     subprocess.run("kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f productpage.yaml", shell=True)
 
-elif cmd == "watch":
-    while True:
-        result = subprocess.run("kubectl get svc productpage-service -n cdps-17 -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null", shell=True, capture_output=True, text=True)
-        ip = result.stdout.strip()
-        if ip and ip != "''" and ip != "":
-            subprocess.run(f"echo {ip}", shell=True)
-            break
-        time.sleep(2)
 
 elif cmd == "stop":
     subprocess.run("kubectl delete namespace cdps-17", shell=True)
