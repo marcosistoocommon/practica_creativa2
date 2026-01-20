@@ -62,7 +62,12 @@ elif cmd == "run":
     subprocess.run("sudo kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
     subprocess.run("sudo kubectl apply --validate=false -f productpage.yaml", shell=True)
     subprocess.run("sudo kubectl get svc productpage-service -n cdps-17 -o wide", shell=True)
-    subprocess.run("sudo minikube tunnel", shell=True)
+    
+    print("\nStarting port-forward to expose service externally...")
+    print("Access the service at http://34.163.46.254:9080")
+    subprocess.Popen("sudo kubectl port-forward -n cdps-17 svc/productpage-service 9080:9080 --address 0.0.0.0", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(2)
+    print("Port-forward started in background. Service is now accessible!")
 
 elif cmd == "stop":
     subprocess.run("sudo kubectl delete namespace cdps-17", shell=True)
