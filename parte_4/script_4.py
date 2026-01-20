@@ -21,7 +21,7 @@ if cmd == "install":
     subprocess.run("wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 -O minikube", shell=True)
     subprocess.run("chmod 755 minikube ", shell=True)
     subprocess.run("sudo mv minikube /usr/local/bin/", shell=True)
-    subprocess.run("minikube start", shell=True)
+    subprocess.run("minikube start --driver=none", shell=True)
     subprocess.run("minikube status", shell=True)
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
