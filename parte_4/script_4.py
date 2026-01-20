@@ -4,6 +4,7 @@ import sys
 import time
 
 if len(sys.argv) < 2:
+    print("Usage: python script_4.py [install|build|run|watch|stop|delete]")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
