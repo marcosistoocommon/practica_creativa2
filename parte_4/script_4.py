@@ -9,6 +9,8 @@ if len(sys.argv) < 2:
 cmd = sys.argv[1].lower()
 
 if cmd == "install":
+    subprocess.run("sudo rm -f /etc/apt/sources.list.d/kubernetes.list 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -f /usr/share/keyrings/kubernetes-archive-keyring.gpg 2>/dev/null || true", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack containernetworking-plugins", shell=True)
