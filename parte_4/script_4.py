@@ -16,8 +16,18 @@ if cmd == "install":
     subprocess.run("sudo apt-get update -y", shell=True)
     subprocess.run("sudo apt-get install -y docker.io", shell=True)
     subprocess.run("sudo usermod -aG docker $USER", shell=True)
-    subprocess.run("gcloud auth application-default print-access-token >/dev/null 2>&1 || true", shell=True)
+    subprocess.run("sudo apt-get install -y kubectl google-cloud-sdk-gke-gcloud-auth-plugin", shell=True)
+    # If the VM SA lacks scopes, fall back to user login without browser.
+    token_check = subprocess.run("gcloud auth application-default print-access-token >/dev/null 2>&1", shell=True)
+    if token_check.returncode != 0:
+        subprocess.run("gcloud auth login --no-browser || true", shell=True)
+        subprocess.run("gcloud auth application-default login --no-browser || true", shell=True)
     subprocess.run(f"gcloud config set project {PROJECT_ID}", shell=True)
+    # Preflight: fail fast if the active identity lacks container scopes/roles.
+    gke_check = subprocess.run("gcloud container clusters list --limit=1 --format=value(name)", shell=True)
+    if gke_check.returncode != 0:
+        print("ERROR: La cuenta activa no tiene scopes/roles suficientes para GKE. Revisa scopes de la VM (cloud-platform) o haz 'gcloud auth login --no-browser' con una cuenta con permisos.")
+        sys.exit(1)
     subprocess.run(f"gcloud container clusters create {CLUSTER_NAME} --num-nodes=3 --zone={ZONE} --no-enable-autoscaling", shell=True)
     subprocess.run(f"gcloud container clusters get-credentials {CLUSTER_NAME} --zone={ZONE}", shell=True)
     subprocess.run("gcloud auth configure-docker --quiet", shell=True)
