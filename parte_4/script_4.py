@@ -43,6 +43,10 @@ if cmd == "install":
     subprocess.run("sudo mv minikube /usr/local/bin/", shell=True)
     subprocess.run("minikube start --driver=none", shell=True)
     subprocess.run("minikube status", shell=True)
+    
+
+    subprocess.run("kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml", shell=True)
+
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
     pwd = os.getcwd()
