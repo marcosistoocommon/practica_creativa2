@@ -9,8 +9,12 @@ if len(sys.argv) < 2:
 
 cmd = sys.argv[1].lower()
 
+subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
+subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
+subprocess.run("sudo systemctl enable docker", shell=True)
+subprocess.run("sudo systemctl restart docker || true", shell=True)
+
 if cmd == "build":
-    subprocess.run("sudo apt install -y podman-docker", shell=True)
     subprocess.run("sudo docker build -t cdps-productpage:g17 .", shell=True)
 elif cmd == "run":
     subprocess.run("sudo docker run --name productpage_cdps_17 -p 9095:8080 -e TEAM_ID=17 -e APP_OWNER=Perez-et-al -d cdps-productpage:g17", shell=True)
