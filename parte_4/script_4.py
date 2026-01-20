@@ -52,9 +52,6 @@ elif cmd == "build":
     print("All images loaded into Minikube. Ready to run the application.")
 
 elif cmd == "run":
-    subprocess.run("sudo minikube update-context", shell=True)
-    subprocess.run("sudo kubectl config use-context minikube", shell=True)
-    
     os.chdir("bookinfo/platform/kube")
     subprocess.run("sudo kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
     subprocess.run("sudo kubectl apply --validate=false -f details.yaml", shell=True)
