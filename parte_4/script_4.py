@@ -21,7 +21,7 @@ if cmd == "install":
     subprocess.run("sudo sysctl -w fs.protected_regular=0", shell=True)
     subprocess.run("sudo minikube start --driver=docker --force --memory=2500mb --cpus=2", shell=True)
     subprocess.run("mkdir -p ~/.kube", shell=True)
-    subprocess.run("sudo minikube -p minikube kubeconfig > ~/.kube/config", shell=True)
+    subprocess.run("sudo minikube kubectl -- config view --raw > ~/.kube/config", shell=True)
     subprocess.run("sudo chown $(id -u):$(id -g) ~/.kube/config", shell=True)
     subprocess.run("chmod 600 ~/.kube/config", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
