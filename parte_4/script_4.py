@@ -18,6 +18,10 @@ if cmd == "install":
         subprocess.run("sudo apt-get install -y docker.io", shell=True)
         subprocess.run("sudo systemctl start docker", shell=True)
         subprocess.run("sudo systemctl enable docker", shell=True)
+    # Ensure current user can access Docker daemon
+    subprocess.run("sudo groupadd -f docker", shell=True)
+    subprocess.run("sudo usermod -aG docker $USER", shell=True)
+    subprocess.run("sudo systemctl restart docker", shell=True)
     
     # Install kubectl if not present
     probe = subprocess.run("which kubectl > /dev/null 2>&1", shell=True)
