@@ -13,11 +13,12 @@ if cmd == "install":
     subprocess.run("sudo apt install -y curl wget apt-transport-https", shell=True)
     subprocess.run("sudo apt install -y docker.io", shell=True)
     subprocess.run("sudo systemctl enable docker", shell=True)
-    subprocess.run("sudo systemctl start docker", shell=True)
+    subprocess.run("sudo systemctl restart docker", shell=True)
+    subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -rf ~/.minikube /root/.minikube /var/lib/minikube 2>/dev/null || true", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
-    subprocess.run("sudo minikube delete 2>/dev/null || true", shell=True)
-    subprocess.run("sudo minikube start --driver=docker", shell=True)
+    subprocess.run("sudo minikube start --driver=docker --force --memory=2500mb --cpus=2", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 
