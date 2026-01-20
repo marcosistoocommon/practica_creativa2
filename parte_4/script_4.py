@@ -5,6 +5,7 @@ from pathlib import Path
 
 subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
 subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
+subprocess.run("sudo apt install -y podman-docker", shell=True)
 subprocess.run("echo 'virtualbox-ext-pack virtualbox-ext-pack/license select true' | sudo debconf-set-selections", shell=True)
 subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y virtualbox virtualbox-ext-pack", shell=True)
 subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
