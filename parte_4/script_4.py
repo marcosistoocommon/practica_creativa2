@@ -21,6 +21,15 @@ if cmd == "install":
 
 
     subprocess.run("sudo snap install kubectl --classic", shell=True)
+    
+    subprocess.run("git clone https://github.com/Mirantis/cri-dockerd.git /tmp/cri-dockerd", shell=True)
+    subprocess.run("cd /tmp/cri-dockerd && mkdir -p bin && go build -o bin/cri-dockerd", shell=True)
+    subprocess.run("sudo install -o root -g root -m 0755 /tmp/cri-dockerd/bin/cri-dockerd /usr/local/bin/cri-dockerd", shell=True)
+    subprocess.run("sudo install /tmp/cri-dockerd/packaging/systemd/* /etc/systemd/system", shell=True)
+    subprocess.run("sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service", shell=True)
+    subprocess.run("sudo systemctl daemon-reload", shell=True)
+    subprocess.run("sudo systemctl enable --now cri-docker.socket", shell=True)
+    
     subprocess.run("export CNI_PLUGIN_VERSION=1.9.0", shell=True)
     subprocess.run("export CNI_PLUGIN_TAR=\"cni-plugins-linux-amd64-$CNI_PLUGIN_VERSION.tgz\"", shell=True)
     subprocess.run("export CNI_PLUGIN_INSTALL_DIR=/opt/cni/bin", shell=True)
