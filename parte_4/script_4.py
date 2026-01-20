@@ -11,14 +11,14 @@ cmd = sys.argv[1].lower()
 if cmd == "install":
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
-    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y containerd", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y containerd containernetworking-plugins", shell=True)
     subprocess.run("sudo mkdir -p /etc/containerd && sudo containerd config default | sudo tee /etc/containerd/config.toml", shell=True)
     subprocess.run("sudo systemctl enable containerd && sudo systemctl restart containerd", shell=True)
-    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack kubeadm", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
-    subprocess.run("minikube delete || true", shell=True)
-    subprocess.run("minikube start --driver=none --container-runtime=containerd --force", shell=True)
+    subprocess.run("minikube delete 2>/dev/null || true", shell=True)
+    subprocess.run("minikube start --driver=none --container-runtime=containerd --memory=2048 --force", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 elif cmd == "build":
