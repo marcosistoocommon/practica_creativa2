@@ -10,7 +10,9 @@ cmd = sys.argv[1].lower()
 
 if cmd == "install":
     subprocess.run("sudo rm -f /etc/apt/sources.list.d/kubernetes.list 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -f /etc/apt/sources.list.d/*kubernetes* 2>/dev/null || true", shell=True)
     subprocess.run("sudo rm -f /usr/share/keyrings/kubernetes-archive-keyring.gpg 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -rf /tmp/juju-* 2>/dev/null || true", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack containernetworking-plugins", shell=True)
@@ -18,6 +20,7 @@ if cmd == "install":
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
     subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
     subprocess.run("sudo rm -rf /root/.minikube 2>/dev/null || true", shell=True)
+    subprocess.run("sudo sysctl -w fs.protected_regular=0", shell=True)
     subprocess.run("sudo minikube start --driver=none --force", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
