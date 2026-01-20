@@ -20,6 +20,7 @@ if cmd == "install":
     subprocess.run("sudo minikube start --driver=docker", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
+
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
     pwd = os.getcwd()
