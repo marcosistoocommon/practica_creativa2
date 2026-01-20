@@ -9,41 +9,12 @@ if len(sys.argv) < 2:
 cmd = sys.argv[1].lower()
 
 if cmd == "install":
-    # Update package manager
-    subprocess.run("sudo apt-get update", shell=True)
-    
-    # Install Docker if not present
-    probe = subprocess.run("which docker > /dev/null 2>&1", shell=True)
-    if probe.returncode != 0:
-        subprocess.run("sudo apt-get install -y docker.io", shell=True)
-        subprocess.run("sudo systemctl start docker", shell=True)
-        subprocess.run("sudo systemctl enable docker", shell=True)
-    # Ensure current user can access Docker daemon
-    subprocess.run("sudo groupadd -f docker", shell=True)
-    subprocess.run("sudo usermod -aG docker $USER", shell=True)
-    subprocess.run("sudo systemctl restart docker", shell=True)
-    
-    # Install kubectl if not present
-    probe = subprocess.run("which kubectl > /dev/null 2>&1", shell=True)
-    if probe.returncode != 0:
-        subprocess.run("curl -LO \"https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\"", shell=True)
-        subprocess.run("sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl", shell=True)
-        subprocess.run("rm kubectl", shell=True)
-    
-    # Install gcloud CLI if not present
-    probe = subprocess.run("which gcloud > /dev/null 2>&1", shell=True)
-    if probe.returncode != 0:
-        subprocess.run("curl https://sdk.cloud.google.com | bash", shell=True)
-        subprocess.run("exec -l $SHELL", shell=True)
-
-    # Install minikube if not present
-    probe = subprocess.run("which minikube > /dev/null 2>&1", shell=True)
-    if probe.returncode != 0:
-        subprocess.run("sudo apt-get install -y conntrack", shell=True)
-        subprocess.run("curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
-        subprocess.run("sudo install minikube /usr/local/bin/minikube", shell=True)
-        subprocess.run("rm minikube", shell=True)
-
+    subprocess.run("sudo snap install kubectl --classic", shell=True)
+    subprocess.run("wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 -O minikube", shell=True)
+    subprocess.run("chmod 755 minikube ", shell=True)
+    subprocess.run("sudo mv minikube /usr/local/bin/", shell=True)
+    subprocess.run("minikube start --memory=4096 --cpus=2", shell=True)
+    subprocess.run("minikube status", shell=True)
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
     pwd = os.getcwd()
