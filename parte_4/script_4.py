@@ -13,7 +13,7 @@ subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y doc
 subprocess.run("sudo systemctl enable --now docker", shell=True)
 subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
 subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
-subprocess.run("sudo minikube start --driver=docker --force", shell=True)
+subprocess.run("minikube start --driver=none --force", shell=True)
 subprocess.run("sudo snap install kubectl --classic", shell=True)
 
 os.chdir("bookinfo/src/reviews")
