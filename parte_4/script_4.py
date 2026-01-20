@@ -41,19 +41,19 @@ elif cmd == "run":
     subprocess.run("sudo kubectl config use-context minikube", shell=True)
     
     os.chdir("bookinfo/platform/kube")
-    subprocess.run("kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f details.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f ratings.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f reviews-svc.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f reviews-v1-deployment.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f reviews-v2-deployment.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
-    subprocess.run("kubectl apply --validate=false -f productpage.yaml", shell=True)
-    subprocess.run("kubectl get svc productpage-service -n cdps-17 -o wide", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f details.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f ratings.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f reviews-svc.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f reviews-v1-deployment.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f reviews-v2-deployment.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
+    subprocess.run("sudo kubectl apply --validate=false -f productpage.yaml", shell=True)
+    subprocess.run("sudo kubectl get svc productpage-service -n cdps-17 -o wide", shell=True)
 
 
 elif cmd == "stop":
-    subprocess.run("kubectl delete namespace cdps-17", shell=True)
+    subprocess.run("sudo kubectl delete namespace cdps-17", shell=True)
 
 elif cmd == "delete":
     subprocess.run("kubectl delete namespace cdps-17 2>/dev/null || true", shell=True)
