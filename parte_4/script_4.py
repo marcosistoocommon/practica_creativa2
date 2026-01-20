@@ -16,12 +16,17 @@ if cmd == "install":
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack containernetworking-plugins", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
+    subprocess.run("curl -LO https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.4/cri-dockerd-0.3.4.amd64.tgz && tar xzf cri-dockerd-0.3.4.amd64.tgz && sudo install -o root -g root -m 0755 cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd && rm -rf cri-dockerd cri-dockerd-0.3.4.amd64.tgz", shell=True)
+    subprocess.run("curl -LO https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service && sudo install -D -m 0644 cri-docker.service /etc/systemd/system/cri-docker.service && rm cri-docker.service", shell=True)
+    subprocess.run("curl -LO https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket && sudo install -D -m 0644 cri-docker.socket /etc/systemd/system/cri-docker.socket && rm cri-docker.socket", shell=True)
+    subprocess.run("sudo systemctl daemon-reload && sudo systemctl enable cri-docker && sudo systemctl start cri-docker", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
     subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
     subprocess.run("sudo rm -rf /root/.minikube 2>/dev/null || true", shell=True)
     subprocess.run("sudo sysctl -w fs.protected_regular=0", shell=True)
-    subprocess.run("sudo minikube start --driver=none --force", shell=True)
+    subprocess.run("sudo minikube start --driver=none --force --cri-socket /run/cri-dockerd.sock", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 elif cmd == "build":
