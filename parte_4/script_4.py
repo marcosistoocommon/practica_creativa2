@@ -16,11 +16,12 @@ if cmd == "install":
     subprocess.run("sudo systemctl start podman.socket", shell=True)
     subprocess.run("echo 'unqualified-search-registries = [\"docker.io\"]' | sudo tee -a /etc/containers/registries.conf", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
-    subprocess.run("sudo systemctl enable --now docker", shell=True)
+    subprocess.run("sudo systemctl start docker || true", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
     subprocess.run("minikube start --driver=none --force", shell=True)
-    subprocess.run("sudo snap install kubectl --classic", shell=True)
+    subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
