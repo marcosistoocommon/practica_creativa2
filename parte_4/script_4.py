@@ -18,7 +18,6 @@ if cmd == "install":
 
 
     subprocess.run("sudo snap install kubectl --classic", shell=True)
-    # Install CNI plugins (v1.9.0)
     subprocess.run("export CNI_PLUGIN_VERSION=1.9.0", shell=True)
     subprocess.run("export CNI_PLUGIN_TAR=\"cni-plugins-linux-amd64-$CNI_PLUGIN_VERSION.tgz\"", shell=True)
     subprocess.run("export CNI_PLUGIN_INSTALL_DIR=/opt/cni/bin", shell=True)
