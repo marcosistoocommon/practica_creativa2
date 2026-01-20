@@ -14,7 +14,8 @@ if cmd == "install":
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack containernetworking-plugins", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
-    subprocess.run("sudo rm -rf ~/.minikube 2>/dev/null || true", shell=True)
+    subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -rf /root/.minikube 2>/dev/null || true", shell=True)
     subprocess.run("sudo minikube start --driver=none --force", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
