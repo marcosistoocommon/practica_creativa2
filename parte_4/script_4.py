@@ -7,6 +7,7 @@ ZONE = f"{REGION}-a"
 CLUSTER_NAME = "productpage-cluster"
 
 if len(sys.argv) < 2:
+    print("Usage: python script_4.py [install|build|run|stop|delete]")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
@@ -79,4 +80,5 @@ elif cmd == "delete":
     subprocess.run(f"gcloud container clusters delete {CLUSTER_NAME} --zone={ZONE} --quiet", shell=True)
 
 else:
+    print("Invalid command. Use: install, build, run, stop, or delete")
     sys.exit(1)
