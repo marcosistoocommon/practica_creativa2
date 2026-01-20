@@ -47,20 +47,6 @@ elif cmd == "build":
     subprocess.run("sudo docker build -f Dockerfile.ratings -t 17/ratings .", shell=True)
     subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
     
-    print("Loading images into Minikube (this may take a while)...")
-    print("Loading 17/productpage")
-    subprocess.run("minikube image load 17/productpage", shell=True)
-    print("Loading 17/ratings")
-    subprocess.run("minikube image load 17/ratings", shell=True)
-    print("Loading 17/details")
-    subprocess.run("minikube image load 17/details", shell=True)
-    print("Loading 17/reviews-v1")
-    subprocess.run("minikube image load 17/reviews-v1", shell=True)
-    print("Loading 17/reviews-v2")
-    subprocess.run("minikube image load 17/reviews-v2", shell=True)
-    print("Loading 17/reviews-v3")
-    subprocess.run("minikube image load 17/reviews-v3", shell=True)
-    print("All images loaded into Minikube. Ready to run the application.")
 
 elif cmd == "run":
     os.chdir("bookinfo/platform/kube")
