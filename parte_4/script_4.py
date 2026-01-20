@@ -10,15 +10,15 @@ cmd = sys.argv[1].lower()
 
 if cmd == "install":
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
-    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https", shell=True)
-    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y containerd containernetworking-plugins", shell=True)
-    subprocess.run("sudo mkdir -p /etc/containerd && sudo containerd config default | sudo tee /etc/containerd/config.toml", shell=True)
-    subprocess.run("sudo systemctl enable containerd && sudo systemctl restart containerd", shell=True)
-    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y conntrack kubeadm", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y curl wget apt-transport-https gnupg2", shell=True)
+    subprocess.run("curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg", shell=True)
+    subprocess.run("echo 'deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main' | sudo tee /etc/apt/sources.list.d/kubernetes.list", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y kubeadm conntrack containernetworking-plugins", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
     subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
     subprocess.run("minikube delete 2>/dev/null || true", shell=True)
-    subprocess.run("minikube start --driver=none --container-runtime=containerd --memory=2048 --force", shell=True)
+    subprocess.run("sudo minikube start --driver=none --force", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 elif cmd == "build":
