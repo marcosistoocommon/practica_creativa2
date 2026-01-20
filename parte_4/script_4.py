@@ -13,6 +13,7 @@ if cmd == "install":
     subprocess.run("wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 -O minikube", shell=True)
     subprocess.run("chmod 755 minikube ", shell=True)
     subprocess.run("sudo mv minikube /usr/local/bin/", shell=True)
+    subprocess.run("sudo usermod -aG docker $USER && newgrp docker", shell=True)
     subprocess.run("minikube start --memory=4096 --cpus=2", shell=True)
     subprocess.run("minikube status", shell=True)
 elif cmd == "build":
