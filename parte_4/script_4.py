@@ -16,13 +16,14 @@ if cmd == "install":
     subprocess.run("sudo systemctl start docker", shell=True)
     subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
     subprocess.run("sudo rm -rf ~/.minikube /root/.minikube /var/lib/minikube 2>/dev/null || true", shell=True)
+    subprocess.run("sudo rm -rf /tmp/juju-* 2>/dev/null || true", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
-    subprocess.run("sudo minikube start --driver=docker", shell=True)
+    subprocess.run("sudo sysctl -w fs.protected_regular=0", shell=True)
+    subprocess.run("sudo minikube start --driver=docker --force --memory=2500mb --cpus=2", shell=True)
     subprocess.run("mkdir -p ~/.kube", shell=True)
     subprocess.run("sudo minikube -p minikube kubeconfig > ~/.kube/config", shell=True)
     subprocess.run("sudo chown $(id -u):$(id -g) ~/.kube/config", shell=True)
     subprocess.run("chmod 600 ~/.kube/config", shell=True)
-    subprocess.run("sudo minikube start --driver=docker --force --memory=2500mb --cpus=2", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
 
