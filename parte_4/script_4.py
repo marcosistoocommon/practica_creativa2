@@ -21,7 +21,7 @@ if cmd == "install":
     subprocess.run("sudo groupadd -f docker", shell=True)
     subprocess.run("sudo usermod -aG docker $USER", shell=True)
     subprocess.run("sudo systemctl restart docker", shell=True)
-    subprocess.run("sudo minikube start --force --driver=docker --memory=2048 --cpus=2", shell=True)
+    subprocess.run("sudo minikube start --force --driver=none --memory=2048 --cpus=2", shell=True)
     subprocess.run("sudo minikube status", shell=True)
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
@@ -63,11 +63,13 @@ elif cmd == "run":
     subprocess.run("sudo kubectl apply --validate=false -f productpage.yaml", shell=True)
     subprocess.run("sudo kubectl get svc productpage-service -n cdps-17 -o wide", shell=True)
     
-    print("\nStarting port-forward to expose service externally...")
-    print("Access the service at http://34.163.46.254:9080")
-    subprocess.Popen("sudo kubectl port-forward -n cdps-17 svc/productpage-service 9080:9080 --address 0.0.0.0", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(2)
-    print("Port-forward started in background. Service is now accessible!")
+    # Get NodePort and display access URL
+    import json
+    result = subprocess.run("sudo kubectl get svc productpage-service -n cdps-17 -o json", shell=True, capture_output=True, text=True)
+    svc = json.loads(result.stdout)
+    nodeport = svc['spec']['ports'][0]['nodePort']
+    print(f"\n✓ Service deployed successfully!")
+    print(f"✓ Access via: http://34.163.46.254:{nodeport}")
 
 elif cmd == "stop":
     subprocess.run("sudo kubectl delete namespace cdps-17", shell=True)
