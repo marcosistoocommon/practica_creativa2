@@ -13,11 +13,15 @@ if cmd == "install":
     subprocess.run("sudo apt install -y curl wget apt-transport-https", shell=True)
     subprocess.run("sudo apt install -y docker.io", shell=True)
     subprocess.run("sudo systemctl enable docker", shell=True)
-    subprocess.run("sudo systemctl restart docker", shell=True)
+    subprocess.run("sudo systemctl start docker", shell=True)
     subprocess.run("sudo minikube delete --all --purge 2>/dev/null || true", shell=True)
     subprocess.run("sudo rm -rf ~/.minikube /root/.minikube /var/lib/minikube 2>/dev/null || true", shell=True)
     subprocess.run("curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64", shell=True)
-    subprocess.run("sudo install minikube-linux-amd64 /usr/local/bin/minikube", shell=True)
+    subprocess.run("sudo minikube start --driver=docker", shell=True)
+    subprocess.run("mkdir -p ~/.kube", shell=True)
+    subprocess.run("sudo minikube -p minikube kubeconfig > ~/.kube/config", shell=True)
+    subprocess.run("sudo chown $(id -u):$(id -g) ~/.kube/config", shell=True)
+    subprocess.run("chmod 600 ~/.kube/config", shell=True)
     subprocess.run("sudo minikube start --driver=docker --force --memory=2500mb --cpus=2", shell=True)
     subprocess.run("sudo snap install kubectl --classic 2>/dev/null || true", shell=True)
 
@@ -36,6 +40,12 @@ elif cmd == "build":
     subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
 
 elif cmd == "run":
+    # wait for API server to be reachable
+    for _ in range(30):
+        probe = subprocess.run("kubectl cluster-info > /dev/null 2>&1", shell=True)
+        if probe.returncode == 0:
+            break
+        time.sleep(2)
     os.chdir("bookinfo/platform/kube")
     subprocess.run("kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f details.yaml", shell=True)
