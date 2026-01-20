@@ -37,7 +37,9 @@ elif cmd == "build":
     subprocess.run("sudo docker build -f Dockerfile.details -t 17/details .", shell=True)
 
 elif cmd == "run":
-
+    subprocess.run("sudo minikube update-context", shell=True)
+    subprocess.run("sudo kubectl config use-context minikube", shell=True)
+    
     os.chdir("bookinfo/platform/kube")
     subprocess.run("kubectl apply --validate=false -f cdps-namespace.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f details.yaml", shell=True)
