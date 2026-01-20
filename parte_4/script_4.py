@@ -47,6 +47,7 @@ elif cmd == "run":
     subprocess.run("kubectl apply --validate=false -f reviews-v2-deployment.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f productpage.yaml", shell=True)
+    subprocess.run("kubectl port-forward svc/productpage-service 9080:9080 -n cdps-17", shell=True)
 
 elif cmd == "watch":
     while True:
