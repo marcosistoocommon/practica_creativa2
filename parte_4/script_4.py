@@ -47,6 +47,7 @@ elif cmd == "run":
     subprocess.run("kubectl apply --validate=false -f reviews-v2-deployment.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f reviews-v3-deployment.yaml", shell=True)
     subprocess.run("kubectl apply --validate=false -f productpage.yaml", shell=True)
+    subprocess.run("kubectl get svc productpage-service -n cdps-17 -o wide", shell=True)
 
 
 elif cmd == "stop":
