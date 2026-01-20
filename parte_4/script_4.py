@@ -12,6 +12,7 @@ cmd = sys.argv[1].lower()
 if cmd == "install":
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
     subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io conntrack", shell=True)
+    subprocess.run("curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.30.0/crictl-v1.30.0-linux-amd64.tar.gz | sudo tar -xz -C /usr/local/bin/", shell=True)
     subprocess.run("sudo systemctl enable docker", shell=True)
     subprocess.run("sudo systemctl restart docker || true", shell=True)
     subprocess.run("sudo snap install kubectl --classic", shell=True)
