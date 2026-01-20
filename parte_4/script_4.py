@@ -21,7 +21,7 @@ if cmd == "install":
     subprocess.run("sudo groupadd -f docker", shell=True)
     subprocess.run("sudo usermod -aG docker $USER", shell=True)
     subprocess.run("sudo systemctl restart docker", shell=True)
-    subprocess.run("sudo minikube start --driver=docker --memory=4096 --cpus=2", shell=True)
+    subprocess.run("sudo minikube start --driver=docker --memory=2048 --cpus=2", shell=True)
     subprocess.run("sudo minikube status", shell=True)
 elif cmd == "build":
     os.chdir("bookinfo/src/reviews")
