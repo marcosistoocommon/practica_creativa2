@@ -15,6 +15,9 @@ if cmd == "install":
     subprocess.run("curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.30.0/crictl-v1.30.0-linux-amd64.tar.gz | sudo tar -xz -C /usr/local/bin/", shell=True)
     subprocess.run("sudo systemctl enable docker", shell=True)
     subprocess.run("sudo systemctl restart docker || true", shell=True)
+    subprocess.run("sudo groupadd -f docker", shell=True)
+    subprocess.run("sudo usermod -aG docker $USER", shell=True)
+    subprocess.run("sudo chown $USER:$USER /var/run/docker.sock 2>/dev/null || true", shell=True)
 
 
     subprocess.run("sudo snap install kubectl --classic", shell=True)
