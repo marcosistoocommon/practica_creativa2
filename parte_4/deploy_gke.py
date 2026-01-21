@@ -9,6 +9,7 @@ import sys
 import time
 import argparse
 import os
+import tempfile
 
 # Configuración
 CLUSTER_NAME = "bookinfo-cluster"
@@ -138,48 +139,115 @@ def build_docker_images(team_id="17"):
     run_command(f"docker images | grep cdps")
 
 
-def push_images_to_gcr(project_id, team_id="17"):
-    """Sube las imágenes a Google Container Registry"""
-    print(f"\n📤 Subiendo imágenes a Google Container Registry...")
+def _image_ref(registry_type, project_id, image_name, tag, ar_region=None, ar_repo=None):
+    """Construye la referencia de imagen según el registro elegido"""
+    if registry_type == "ar":
+        if not ar_region or not ar_repo:
+            print("❌ Artifact Registry requiere --ar-region y --ar-repo")
+            sys.exit(1)
+        return f"{ar_region}-docker.pkg.dev/{project_id}/{ar_repo}/{image_name}:{tag}"
+    # Default GCR
+    return f"gcr.io/{project_id}/{image_name}:{tag}"
+
+
+def push_images_via_docker(registry_type, project_id, team_id="17", ar_region=None, ar_repo=None):
+    """Sube las imágenes usando Docker push (requiere conectividad desde host)"""
+    target = "gcr.io" if registry_type == "gcr" else f"{ar_region}-docker.pkg.dev"
+    print(f"\n📤 Subiendo imágenes con Docker al registro: {target}")
     print(f"   Proyecto: {project_id}")
     
-    # Configurar Docker para usar gcloud como credential helper
-    run_command("gcloud auth configure-docker --quiet")
+    # Configurar Docker para usar gcloud como helper del registro elegido
+    run_command(f"gcloud auth configure-docker {target} --quiet")
     
     images = [
-        f"cdps-productpage:g{team_id}",
-        f"cdps-details:g{team_id}",
-        f"cdps-ratings:g{team_id}",
-        f"cdps-reviews:v1-g{team_id}",
-        f"cdps-reviews:v2-g{team_id}",
-        f"cdps-reviews:v3-g{team_id}"
+        ("cdps-productpage", f"g{team_id}"),
+        ("cdps-details", f"g{team_id}"),
+        ("cdps-ratings", f"g{team_id}"),
+        ("cdps-reviews", f"v1-g{team_id}"),
+        ("cdps-reviews", f"v2-g{team_id}"),
+        ("cdps-reviews", f"v3-g{team_id}")
     ]
     
-    for image in images:
-        # Etiquetar para GCR
-        gcr_image = f"gcr.io/{project_id}/{image}"
-        print(f"\n   Etiquetando {image} -> {gcr_image}")
-        run_command(f"docker tag {image} {gcr_image}")
-        
-        # Subir a GCR
-        print(f"   Subiendo {gcr_image}...")
-        run_command(f"docker push {gcr_image}")
+    for name, tag in images:
+        src = f"{name}:{tag}"
+        dst = _image_ref(registry_type, project_id, name, tag, ar_region, ar_repo)
+        print(f"\n   Etiquetando {src} -> {dst}")
+        run_command(f"docker tag {src} {dst}")
+        print(f"   Subiendo {dst}...")
+        run_command(f"docker push {dst}")
     
-    print("\n✅ Todas las imágenes subidas a GCR")
+    print("\n✅ Todas las imágenes subidas")
 
 
-def update_yaml_images(project_id, team_id="17"):
-    """Actualiza los archivos YAML permanentemente para usar imágenes de GCR"""
-    print(f"\n📝 Actualizando archivos YAML con imágenes de GCR...")
+def _cloud_build_submit(context_dir, dockerfile, image_ref, build_args=None):
+    """Ejecuta una build remota en Cloud Build para construir y subir una imagen"""
+    build_args = build_args or []
+    # Construir línea de args para docker build
+    args_list = ["build", "-t", image_ref, "-f", dockerfile] + build_args + ["."]
+    # Generar YAML temporal
+    yaml_content = "steps:\n"
+    yaml_content += "- name: gcr.io/cloud-builders/docker\n"
+    yaml_content += "  args: [" + ", ".join([f'\"{a}\"' for a in args_list]) + "]\n"
+    yaml_content += "images:\n- \"" + image_ref + "\"\n"
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tf:
+        tf.write(yaml_content)
+        tmp_path = tf.name
+    print(f"   🧱 Cloud Build: {image_ref}")
+    run_command(f"gcloud builds submit {context_dir} --config {tmp_path}")
+
+
+def build_and_push_with_cloud_build(registry_type, project_id, team_id="17", ar_region=None, ar_repo=None):
+    """Construye y sube imágenes usando Cloud Build (remoto)"""
+    print("\n🏗️  Construyendo y subiendo imágenes con Cloud Build...")
+    # Habilitar APIs necesarias
+    run_command("gcloud services enable cloudbuild.googleapis.com")
+    if registry_type == "gcr":
+        run_command("gcloud services enable containerregistry.googleapis.com")
+    else:
+        run_command("gcloud services enable artifactregistry.googleapis.com")
+    
+    # Productpage
+    _cloud_build_submit(
+        SCRIPT_DIR,
+        "Dockerfile.productpage",
+        _image_ref(registry_type, project_id, "cdps-productpage", f"g{team_id}", ar_region, ar_repo)
+    )
+    # Details
+    _cloud_build_submit(
+        SCRIPT_DIR,
+        "Dockerfile.details",
+        _image_ref(registry_type, project_id, "cdps-details", f"g{team_id}", ar_region, ar_repo)
+    )
+    # Ratings
+    _cloud_build_submit(
+        SCRIPT_DIR,
+        "Dockerfile.ratings",
+        _image_ref(registry_type, project_id, "cdps-ratings", f"g{team_id}", ar_region, ar_repo)
+    )
+    # Reviews v1/v2/v3
+    reviews_wlpcfg_dir = os.path.join(SRC_DIR, "reviews", "reviews-wlpcfg")
+    for version in ["v1", "v2", "v3"]:
+        _cloud_build_submit(
+            reviews_wlpcfg_dir,
+            "Dockerfile",
+            _image_ref(registry_type, project_id, "cdps-reviews", f"{version}-g{team_id}", ar_region, ar_repo),
+            ["--build-arg", f"service_version={version}"]
+        )
+    print("✅ Imágenes construidas y subidas con Cloud Build")
+
+
+def update_yaml_images(registry_type, project_id, team_id="17", ar_region=None, ar_repo=None):
+    """Actualiza los archivos YAML para usar imágenes del registro elegido"""
+    print(f"\n📝 Actualizando archivos YAML con imágenes del registro...")
     
     # Mapeo de archivos y las imágenes que deben usar
     yaml_configs = [
-        ("productpage.yaml", f"gcr.io/{project_id}/cdps-productpage:g{team_id}"),
-        ("details.yaml", f"gcr.io/{project_id}/cdps-details:g{team_id}"),
-        ("ratings.yaml", f"gcr.io/{project_id}/cdps-ratings:g{team_id}"),
-        ("reviews-v1-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v1-g{team_id}"),
-        ("reviews-v2-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v2-g{team_id}"),
-        ("reviews-v3-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v3-g{team_id}")
+        ("productpage.yaml", _image_ref(registry_type, project_id, "cdps-productpage", f"g{team_id}", ar_region, ar_repo)),
+        ("details.yaml", _image_ref(registry_type, project_id, "cdps-details", f"g{team_id}", ar_region, ar_repo)),
+        ("ratings.yaml", _image_ref(registry_type, project_id, "cdps-ratings", f"g{team_id}", ar_region, ar_repo)),
+        ("reviews-v1-deployment.yaml", _image_ref(registry_type, project_id, "cdps-reviews", f"v1-g{team_id}", ar_region, ar_repo)),
+        ("reviews-v2-deployment.yaml", _image_ref(registry_type, project_id, "cdps-reviews", f"v2-g{team_id}", ar_region, ar_repo)),
+        ("reviews-v3-deployment.yaml", _image_ref(registry_type, project_id, "cdps-reviews", f"v3-g{team_id}", ar_region, ar_repo))
     ]
     
     for yaml_file, image in yaml_configs:
@@ -207,6 +275,25 @@ def update_yaml_images(project_id, team_id="17"):
             print(f"   ⚠️  Archivo no encontrado: {yaml_file}")
     
     print("✅ Archivos YAML actualizados permanentemente")
+
+
+def grant_node_sa_pull_permissions(project_id, zone, cluster_name, registry_type):
+    """Concede permisos de lectura de imágenes al Service Account de los nodos"""
+    print("\n🔐 Concediendo permisos de pull al Service Account de nodos...")
+    pn_cmd = f"gcloud projects describe {project_id} --format=\"value(projectNumber)\""
+    project_number = run_command(pn_cmd, capture_output=True)
+    sa_cmd = f"gcloud container clusters describe {cluster_name} --zone {zone} --format=\"value(nodeConfig.serviceAccount)\""
+    node_sa = run_command(sa_cmd, capture_output=True)
+    if not node_sa or node_sa == "":
+        node_sa = f"{project_number}-compute@developer.gserviceaccount.com"
+    role = "roles/storage.objectViewer" if registry_type == "gcr" else "roles/artifactregistry.reader"
+    bind_cmd = (
+        f"gcloud projects add-iam-policy-binding {project_id} "
+        f"--member \"serviceAccount:{node_sa}\" "
+        f"--role {role}"
+    )
+    run_command(bind_cmd)
+    print(f"✅ Permisos concedidos a {node_sa}: {role}")
 
 
 def create_cluster(project_id=None):
@@ -381,6 +468,28 @@ def main():
         default="17"
     )
     parser.add_argument(
+        "--registry",
+        choices=["gcr", "ar"],
+        help="Registro de contenedores a usar: gcr (por defecto) o ar",
+        default="gcr"
+    )
+    parser.add_argument(
+        "--push-method",
+        choices=["docker", "cloud-build"],
+        help="Método de subida de imágenes: docker (local) o cloud-build (remoto)",
+        default="cloud-build"
+    )
+    parser.add_argument(
+        "--ar-region",
+        help="Región de Artifact Registry (ej: us-central1)",
+        default=None
+    )
+    parser.add_argument(
+        "--ar-repo",
+        help="Nombre del repositorio de Artifact Registry",
+        default=None
+    )
+    parser.add_argument(
         "--skip-build",
         action="store_true",
         help="Omitir construcción de imágenes Docker (usar imágenes existentes)"
@@ -420,15 +529,18 @@ def main():
         print("❌ No se pudo obtener el project ID. Usa --project=tu-proyecto-id")
         sys.exit(1)
     
-    # Construir imágenes Docker si no se omite
+    # Construir y subir imágenes si no se omite
     if not args.skip_build:
-        build_docker_images(args.team_id)
-        push_images_to_gcr(args.project, args.team_id)
-        update_yaml_images(args.project, args.team_id)
+        if args.push_method == "docker":
+            build_docker_images(args.team_id)
+            push_images_via_docker(args.registry, args.project, args.team_id, args.ar_region, args.ar_repo)
+        else:
+            build_and_push_with_cloud_build(args.registry, args.project, args.team_id, args.ar_region, args.ar_repo)
+        update_yaml_images(args.registry, args.project, args.team_id, args.ar_region, args.ar_repo)
         
         if args.only_build:
             print("\n" + "=" * 60)
-            print("✅ CONSTRUCCIÓN COMPLETADA")
+            print("✅ CONSTRUCCIÓN Y SUBIDA COMPLETADAS")
             print("=" * 60)
             print("\n📝 Ahora puedes desplegar con:")
             print(f"   cd {KUBE_DIR}")
@@ -438,7 +550,7 @@ def main():
             print(f"   kubectl get service productpage-service -n {NAMESPACE}")
             return
     else:
-        print("\n⏭️  Omitiendo construcción de imágenes Docker")
+        print("\n⏭️  Omitiendo construcción/subida de imágenes")
     
     # Crear cluster si no se omite
     if not args.skip_cluster:
@@ -446,6 +558,9 @@ def main():
     
     # Obtener credenciales
     get_credentials()
+    
+    # Conceder permisos de pull al SA de nodos
+    grant_node_sa_pull_permissions(args.project, ZONE, CLUSTER_NAME, args.registry)
     
     # Verificar configuración de productpage
     verify_productpage_config()
