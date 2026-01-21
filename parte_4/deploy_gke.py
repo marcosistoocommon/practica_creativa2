@@ -15,7 +15,10 @@ CLUSTER_NAME = "bookinfo-cluster"
 ZONE = "us-central1-a"
 NUM_NODES = 3
 NAMESPACE = "cdps-17"
-KUBE_DIR = "./bookinfo/platform/kube"
+
+# Obtener el directorio del script y construir la ruta a los archivos YAML
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+KUBE_DIR = os.path.join(SCRIPT_DIR, "bookinfo", "platform", "kube")
 
 
 def run_command(command, check=True, capture_output=False):
@@ -46,6 +49,13 @@ def run_command(command, check=True, capture_output=False):
 def check_prerequisites():
     """Verifica que gcloud y kubectl estén instalados"""
     print("\n📋 Verificando prerequisitos...")
+    
+    # Verificar que existe el directorio de archivos YAML
+    if not os.path.exists(KUBE_DIR):
+        print(f"❌ No se encuentra el directorio: {KUBE_DIR}")
+        print(f"   Asegúrate de ejecutar el script desde el directorio parte_4/")
+        sys.exit(1)
+    print(f"✅ Directorio de archivos YAML encontrado: {KUBE_DIR}")
     
     # Verificar gcloud
     try:
