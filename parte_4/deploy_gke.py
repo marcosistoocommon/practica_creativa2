@@ -19,9 +19,10 @@ NAMESPACE = "cdps-17"
 # Obtener el directorio del script y construir la ruta a los archivos YAML
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 KUBE_DIR = os.path.join(SCRIPT_DIR, "bookinfo", "platform", "kube")
+SRC_DIR = os.path.join(SCRIPT_DIR, "bookinfo", "src")
 
 
-def run_command(command, check=True, capture_output=False):
+def run_command(command, check=True, capture_output=False, cwd=None):
     """Ejecuta un comando y maneja errores"""
     print(f"\n🚀 Ejecutando: {command}")
     try:
@@ -31,11 +32,12 @@ def run_command(command, check=True, capture_output=False):
                 shell=True,
                 check=check,
                 capture_output=True,
-                text=True
+                text=True,
+                cwd=cwd
             )
             return result.stdout.strip()
         else:
-            result = subprocess.run(command, shell=True, check=check)
+            result = subprocess.run(command, shell=True, check=check, cwd=cwd)
             return None
     except subprocess.CalledProcessError as e:
         print(f"❌ Error ejecutando comando: {e}")
@@ -72,6 +74,139 @@ def check_prerequisites():
     except:
         print("❌ kubectl no encontrado. Instala kubectl")
         sys.exit(1)
+
+
+def build_docker_images(team_id="17"):
+    """Construye todas las imágenes Docker necesarias"""
+    print("\n🔨 Construyendo imágenes Docker...")
+    print(f"   Team ID: {team_id}")
+    
+    # Verificar que Docker esté disponible
+    try:
+        run_command("docker --version", capture_output=True)
+        print("✅ Docker instalado")
+    except:
+        print("❌ Docker no encontrado. Instala Docker")
+        sys.exit(1)
+    
+    # 1. Construir imagen de productpage
+    print("\n📦 Construyendo imagen de productpage...")
+    cmd = f"docker build -t cdps-productpage:g{team_id} -f Dockerfile.productpage ."
+    run_command(cmd, cwd=SCRIPT_DIR)
+    print(f"✅ Imagen cdps-productpage:g{team_id} creada")
+    
+    # 2. Construir imagen de details
+    print("\n📦 Construyendo imagen de details...")
+    cmd = f"docker build -t cdps-details:g{team_id} -f Dockerfile.details ."
+    run_command(cmd, cwd=SCRIPT_DIR)
+    print(f"✅ Imagen cdps-details:g{team_id} creada")
+    
+    # 3. Construir imagen de ratings
+    print("\n📦 Construyendo imagen de ratings...")
+    cmd = f"docker build -t cdps-ratings:g{team_id} -f Dockerfile.ratings ."
+    run_command(cmd, cwd=SCRIPT_DIR)
+    print(f"✅ Imagen cdps-ratings:g{team_id} creada")
+    
+    # 4. Construir imágenes de reviews (requiere compilación previa con gradle)
+    print("\n📦 Construyendo imágenes de reviews (v1, v2, v3)...")
+    reviews_src_dir = os.path.join(SRC_DIR, "reviews")
+    
+    # Compilar con gradle primero
+    print("   Compilando código Java con Gradle...")
+    gradle_cmd = 'docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build'
+    
+    # En Windows, ajustar el comando para PowerShell
+    if sys.platform == "win32":
+        gradle_cmd = f'docker run --rm -u root -v "{reviews_src_dir}:/home/gradle/project" -w /home/gradle/project gradle:4.8.1 gradle clean build'
+    
+    run_command(gradle_cmd, cwd=reviews_src_dir)
+    print("   ✅ Compilación de Java completada")
+    
+    # Construir las tres versiones de reviews
+    reviews_wlpcfg_dir = os.path.join(reviews_src_dir, "reviews-wlpcfg")
+    
+    for version in ["v1", "v2", "v3"]:
+        print(f"\n   Construyendo reviews {version}...")
+        cmd = f"docker build -t cdps-reviews:{version}-g{team_id} --build-arg service_version={version} -f Dockerfile ."
+        run_command(cmd, cwd=reviews_wlpcfg_dir)
+        print(f"   ✅ Imagen cdps-reviews:{version}-g{team_id} creada")
+    
+    print("\n✅ Todas las imágenes Docker construidas exitosamente")
+    
+    # Mostrar las imágenes creadas
+    print("\n📋 Imágenes Docker creadas:")
+    run_command(f"docker images | grep cdps")
+
+
+def push_images_to_gcr(project_id, team_id="17"):
+    """Sube las imágenes a Google Container Registry"""
+    print(f"\n📤 Subiendo imágenes a Google Container Registry...")
+    print(f"   Proyecto: {project_id}")
+    
+    # Configurar Docker para usar gcloud como credential helper
+    run_command("gcloud auth configure-docker --quiet")
+    
+    images = [
+        f"cdps-productpage:g{team_id}",
+        f"cdps-details:g{team_id}",
+        f"cdps-ratings:g{team_id}",
+        f"cdps-reviews:v1-g{team_id}",
+        f"cdps-reviews:v2-g{team_id}",
+        f"cdps-reviews:v3-g{team_id}"
+    ]
+    
+    for image in images:
+        # Etiquetar para GCR
+        gcr_image = f"gcr.io/{project_id}/{image}"
+        print(f"\n   Etiquetando {image} -> {gcr_image}")
+        run_command(f"docker tag {image} {gcr_image}")
+        
+        # Subir a GCR
+        print(f"   Subiendo {gcr_image}...")
+        run_command(f"docker push {gcr_image}")
+    
+    print("\n✅ Todas las imágenes subidas a GCR")
+
+
+def update_yaml_images(project_id, team_id="17"):
+    """Actualiza los archivos YAML permanentemente para usar imágenes de GCR"""
+    print(f"\n📝 Actualizando archivos YAML con imágenes de GCR...")
+    
+    # Mapeo de archivos y las imágenes que deben usar
+    yaml_configs = [
+        ("productpage.yaml", f"gcr.io/{project_id}/cdps-productpage:g{team_id}"),
+        ("details.yaml", f"gcr.io/{project_id}/cdps-details:g{team_id}"),
+        ("ratings.yaml", f"gcr.io/{project_id}/cdps-ratings:g{team_id}"),
+        ("reviews-v1-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v1-g{team_id}"),
+        ("reviews-v2-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v2-g{team_id}"),
+        ("reviews-v3-deployment.yaml", f"gcr.io/{project_id}/cdps-reviews:v3-g{team_id}")
+    ]
+    
+    for yaml_file, image in yaml_configs:
+        yaml_path = os.path.join(KUBE_DIR, yaml_file)
+        if os.path.exists(yaml_path):
+            print(f"   Actualizando {yaml_file}...")
+            
+            with open(yaml_path, 'r') as f:
+                content = f.read()
+            
+            # Reemplazar la línea de imagen
+            lines = content.split('\n')
+            new_lines = []
+            for line in lines:
+                if 'image:' in line and 'imagePullPolicy' not in line:
+                    indent = len(line) - len(line.lstrip())
+                    new_lines.append(' ' * indent + f'image: {image}')
+                else:
+                    new_lines.append(line)
+            
+            with open(yaml_path, 'w') as f:
+                f.write('\n'.join(new_lines))
+            print(f"   ✅ {yaml_file} actualizado")
+        else:
+            print(f"   ⚠️  Archivo no encontrado: {yaml_file}")
+    
+    print("✅ Archivos YAML actualizados permanentemente")
 
 
 def create_cluster(project_id=None):
@@ -136,7 +271,7 @@ def deploy_namespace():
 
 def deploy_services():
     """Despliega todos los servicios"""
-    print("\n🚢 Desplegando servicios de Kubernetes...")
+    print("\n🚢 Desplegando todos los servicios de Kubernetes...")
     
     yaml_files = [
         "details.yaml",
@@ -240,15 +375,33 @@ def main():
         help="Zona de GCP (default: us-central1-a)",
         default="us-central1-a"
     )
+    parser.add_argument(
+        "--team-id",
+        help="ID del equipo (default: 17)",
+        default="17"
+    )
+    parser.add_argument(
+        "--skip-build",
+        action="store_true",
+        help="Omitir construcción de imágenes Docker (usar imágenes existentes)"
+    )
+    parser.add_argument(
+        "--only-build",
+        action="store_true",
+        help="Solo construir y subir imágenes, actualizar YAMLs (no crear cluster ni desplegar)"
+    )
     
     args = parser.parse_args()
     
-    global ZONE
+    global ZONE, NAMESPACE
     ZONE = args.zone
+    NAMESPACE = f"cdps-{args.team_id}"
     
     print("=" * 60)
     print("🚀 DESPLIEGUE DE BOOKINFO EN GKE CON IP PÚBLICA")
     print("=" * 60)
+    print(f"   Team ID: {args.team_id}")
+    print(f"   Namespace: {NAMESPACE}")
     
     # Verificar prerequisitos
     check_prerequisites()
@@ -256,6 +409,36 @@ def main():
     if args.delete:
         delete_cluster()
         return
+    
+    # Obtener el project_id si no se proporciona
+    if not args.project:
+        print("\n📋 Obteniendo project ID de gcloud...")
+        args.project = run_command("gcloud config get-value project", capture_output=True)
+        print(f"   Project ID: {args.project}")
+    
+    if not args.project or args.project == "":
+        print("❌ No se pudo obtener el project ID. Usa --project=tu-proyecto-id")
+        sys.exit(1)
+    
+    # Construir imágenes Docker si no se omite
+    if not args.skip_build:
+        build_docker_images(args.team_id)
+        push_images_to_gcr(args.project, args.team_id)
+        update_yaml_images(args.project, args.team_id)
+        
+        if args.only_build:
+            print("\n" + "=" * 60)
+            print("✅ CONSTRUCCIÓN COMPLETADA")
+            print("=" * 60)
+            print("\n📝 Ahora puedes desplegar con:")
+            print(f"   cd {KUBE_DIR}")
+            print(f"   kubectl create namespace {NAMESPACE}")
+            print(f"   kubectl apply -f .")
+            print(f"   kubectl get pods -n {NAMESPACE}")
+            print(f"   kubectl get service productpage-service -n {NAMESPACE}")
+            return
+    else:
+        print("\n⏭️  Omitiendo construcción de imágenes Docker")
     
     # Crear cluster si no se omite
     if not args.skip_cluster:
@@ -286,7 +469,10 @@ def main():
     print(f"   Ver pods:     kubectl get pods -n {NAMESPACE}")
     print(f"   Ver services: kubectl get services -n {NAMESPACE}")
     print(f"   Logs:         kubectl logs <pod-name> -n {NAMESPACE}")
-    print(f"   Eliminar:     python deploy_gke.py --delete")
+    print(f"\n   Para redesplegar:")
+    print(f"   cd {KUBE_DIR}")
+    print(f"   kubectl apply -f .")
+    print(f"\n   Eliminar cluster: python3 deploy_gke.py --delete --team-id={args.team_id}")
     print()
 
 
