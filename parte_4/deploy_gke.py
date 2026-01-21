@@ -76,6 +76,12 @@ def check_prerequisites():
         print("❌ kubectl no encontrado. Instala kubectl")
         sys.exit(1)
 
+    # Verificar autenticación de gcloud
+    accounts = run_command("gcloud auth list --format='value(account)'", capture_output=True, check=False)
+    if not accounts:
+        print("❌ No hay cuenta activa en gcloud. Ejecuta 'gcloud auth login' y vuelve a intentarlo.")
+        sys.exit(1)
+
 
 def build_docker_images(team_id="17"):
     """Construye todas las imágenes Docker necesarias"""
@@ -179,7 +185,7 @@ def push_images_via_docker(registry_type, project_id, team_id="17", ar_region=No
     print("\n✅ Todas las imágenes subidas")
 
 
-def _cloud_build_submit(context_dir, dockerfile, image_ref, build_args=None):
+def _cloud_build_submit(context_dir, dockerfile, image_ref, project_id, build_args=None):
     """Ejecuta una build remota en Cloud Build para construir y subir una imagen"""
     build_args = build_args or []
     # Construir línea de args para docker build
@@ -193,36 +199,39 @@ def _cloud_build_submit(context_dir, dockerfile, image_ref, build_args=None):
         tf.write(yaml_content)
         tmp_path = tf.name
     print(f"   🧱 Cloud Build: {image_ref}")
-    run_command(f"gcloud builds submit {context_dir} --config {tmp_path}")
+    run_command(f"gcloud builds submit {context_dir} --config {tmp_path} --project {project_id}")
 
 
 def build_and_push_with_cloud_build(registry_type, project_id, team_id="17", ar_region=None, ar_repo=None):
     """Construye y sube imágenes usando Cloud Build (remoto)"""
     print("\n🏗️  Construyendo y subiendo imágenes con Cloud Build...")
     # Habilitar APIs necesarias
-    run_command("gcloud services enable cloudbuild.googleapis.com")
+    run_command(f"gcloud services enable cloudbuild.googleapis.com --project={project_id}")
     if registry_type == "gcr":
-        run_command("gcloud services enable containerregistry.googleapis.com")
+        run_command(f"gcloud services enable containerregistry.googleapis.com --project={project_id}")
     else:
-        run_command("gcloud services enable artifactregistry.googleapis.com")
+        run_command(f"gcloud services enable artifactregistry.googleapis.com --project={project_id}")
     
     # Productpage
     _cloud_build_submit(
         SCRIPT_DIR,
         "Dockerfile.productpage",
-        _image_ref(registry_type, project_id, "cdps-productpage", f"g{team_id}", ar_region, ar_repo)
+        _image_ref(registry_type, project_id, "cdps-productpage", f"g{team_id}", ar_region, ar_repo),
+        project_id
     )
     # Details
     _cloud_build_submit(
         SCRIPT_DIR,
         "Dockerfile.details",
-        _image_ref(registry_type, project_id, "cdps-details", f"g{team_id}", ar_region, ar_repo)
+        _image_ref(registry_type, project_id, "cdps-details", f"g{team_id}", ar_region, ar_repo),
+        project_id
     )
     # Ratings
     _cloud_build_submit(
         SCRIPT_DIR,
         "Dockerfile.ratings",
-        _image_ref(registry_type, project_id, "cdps-ratings", f"g{team_id}", ar_region, ar_repo)
+        _image_ref(registry_type, project_id, "cdps-ratings", f"g{team_id}", ar_region, ar_repo),
+        project_id
     )
     # Reviews v1/v2/v3
     reviews_wlpcfg_dir = os.path.join(SRC_DIR, "reviews", "reviews-wlpcfg")
@@ -231,6 +240,7 @@ def build_and_push_with_cloud_build(registry_type, project_id, team_id="17", ar_
             reviews_wlpcfg_dir,
             "Dockerfile",
             _image_ref(registry_type, project_id, "cdps-reviews", f"{version}-g{team_id}", ar_region, ar_repo),
+            project_id,
             ["--build-arg", f"service_version={version}"]
         )
     print("✅ Imágenes construidas y subidas con Cloud Build")
@@ -282,7 +292,7 @@ def grant_node_sa_pull_permissions(project_id, zone, cluster_name, registry_type
     print("\n🔐 Concediendo permisos de pull al Service Account de nodos...")
     pn_cmd = f"gcloud projects describe {project_id} --format=\"value(projectNumber)\""
     project_number = run_command(pn_cmd, capture_output=True)
-    sa_cmd = f"gcloud container clusters describe {cluster_name} --zone {zone} --format=\"value(nodeConfig.serviceAccount)\""
+    sa_cmd = f"gcloud container clusters describe {cluster_name} --zone {zone} --project {project_id} --format=\"value(nodeConfig.serviceAccount)\""
     node_sa = run_command(sa_cmd, capture_output=True)
     if not node_sa or node_sa == "":
         node_sa = f"{project_number}-compute@developer.gserviceaccount.com"
@@ -312,10 +322,12 @@ def create_cluster(project_id=None):
     print(f"✅ Cluster '{CLUSTER_NAME}' creado exitosamente")
 
 
-def get_credentials():
+def get_credentials(project_id=None):
     """Obtiene las credenciales del cluster"""
     print(f"\n🔐 Obteniendo credenciales del cluster...")
     cmd = f"gcloud container clusters get-credentials {CLUSTER_NAME} --zone={ZONE}"
+    if project_id:
+        cmd += f" --project={project_id}"
     run_command(cmd)
     print("✅ Credenciales configuradas")
 
@@ -557,7 +569,7 @@ def main():
         create_cluster(args.project)
     
     # Obtener credenciales
-    get_credentials()
+    get_credentials(args.project)
     
     # Conceder permisos de pull al SA de nodos
     grant_node_sa_pull_permissions(args.project, ZONE, CLUSTER_NAME, args.registry)
