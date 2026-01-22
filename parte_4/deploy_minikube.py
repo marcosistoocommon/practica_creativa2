@@ -5,15 +5,20 @@ from __future__ import print_function
 import subprocess
 import os
 import sys
+import time
+import platform
 
 TEAM_ID = "17"
 NAMESPACE = "cdps-{}".format(TEAM_ID)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def run_cmd(cmd):
     print(cmd)
     return subprocess.call(cmd, shell=True)
 
 def main():
+    os.chdir(BASE_DIR)
+    
     # Detectar minikube
     result = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
     if result != 0:
@@ -26,10 +31,7 @@ def main():
     print("\nConfigurando Docker para Minikube...")
     os.system('eval $(minikube docker-env)')
     
-    # Volver a la raiz de parte_4
-    os.chdir("../../..")
-    
-    # Construir imagenes
+    # Construir imagenes desde parte_4/
     print("\nConstruyendo imagenes...")
     run_cmd("docker build -f Dockerfile.productpage -t {}/productpage .".format(TEAM_ID))
     run_cmd("docker build -f Dockerfile.details -t {}/details .".format(TEAM_ID))
@@ -37,21 +39,17 @@ def main():
     
     # Compilar reviews
     print("\nCompilando Reviews...")
-    os.chdir("bookinfo/src/reviews")
-    run_cmd('docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build')
-    os.chdir("../../..")
+    run_cmd('cd bookinfo/src/reviews && docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build && cd {}'.format(BASE_DIR))
     
-    # Construir reviews
+    # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
     run_cmd("docker build -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     run_cmd("docker build -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     run_cmd("docker build -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     
-    # Volver a kube
-    os.chdir("bookinfo/platform/kube")
-    
-    # Desplegar
+    # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
+    os.chdir(os.path.join(BASE_DIR, "bookinfo/platform/kube"))
     run_cmd("kubectl apply -f cdps-namespace.yaml")
     run_cmd("kubectl apply -f details.yaml")
     run_cmd("kubectl apply -f ratings.yaml")
@@ -70,6 +68,34 @@ def main():
     
     print("\nDeployments:")
     run_cmd("kubectl get deployments -n {}".format(NAMESPACE))
+    
+    # Esperar a que los pods estén listos
+    print("\nEsperando a que los pods estén listos...")
+    for i in range(60):
+        result = subprocess.call("kubectl get pods -n {} -o jsonpath='{{.items[?(@.status.phase==\"Running\")].metadata.name}}' | grep -q productpage".format(NAMESPACE), shell=True)
+        if result == 0:
+            print("Pods listos")
+            break
+        time.sleep(1)
+    
+    # Iniciar túnel en otra terminal
+    print("\nIniciando túnel de Minikube en otra terminal...")
+    system = platform.system()
+    
+    if system == "Windows":
+        subprocess.Popen("start powershell -Command \"minikube tunnel\"", shell=True)
+    elif system == "Darwin":
+        subprocess.Popen(["open", "-a", "Terminal", "-n"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(1)
+        os.system("minikube tunnel &")
+    else:
+        os.system("gnome-terminal -- bash -c 'minikube tunnel' &")
+    
+    time.sleep(3)
+    
+    # Obtener URL de acceso
+    print("\nURL del servicio:")
+    run_cmd("minikube service productpage-service -n {} --url".format(NAMESPACE))
 
 if __name__ == "__main__":
     main()
