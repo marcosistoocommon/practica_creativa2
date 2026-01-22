@@ -27,6 +27,12 @@ def main():
     
     print("Minikube detectado")
     
+    # Iniciar minikube
+    print("Iniciando Minikube...")
+    subprocess.call("minikube start", shell=True)
+    
+    print("Minikube iniciado")
+    
     # Configurar Docker para Minikube
     print("\nConfigurando Docker para Minikube...")
     os.system('eval $(minikube docker-env)')
@@ -50,6 +56,18 @@ def main():
     # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
     os.chdir(os.path.join(BASE_DIR, "bookinfo/platform/kube"))
+    
+    # Verificar que minikube está listo
+    print("Esperando a que Minikube esté listo...")
+    for i in range(30):
+        result = subprocess.call("kubectl cluster-info > /dev/null 2>&1", shell=True)
+        if result == 0:
+            break
+        time.sleep(2)
+    
+    # Re-evaluar variables de Docker
+    os.system('eval $(minikube docker-env)')
+    
     run_cmd("kubectl apply -f cdps-namespace.yaml")
     run_cmd("kubectl apply -f details.yaml")
     run_cmd("kubectl apply -f ratings.yaml")
