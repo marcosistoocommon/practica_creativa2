@@ -61,7 +61,8 @@ def main():
     
     # Compilar reviews
     print("\nCompilando Reviews...")
-    run_cmd('cd bookinfo/src/reviews && docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build && cd -')
+    reviews_path = os.path.abspath(os.path.join(BASE_DIR, "bookinfo/src/reviews"))
+    run_cmd('docker run --rm -u root -v "{}:/home/gradle/project" -w /home/gradle/project gradle:4.8.1 gradle clean build'.format(reviews_path))
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
