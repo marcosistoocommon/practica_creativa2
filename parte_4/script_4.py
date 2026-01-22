@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Script for deploying the bookinfo microservices application on Kubernetes (Play with Kubernetes)
 Este script automatiza el despliegue de todos los microservicios en Kubernetes
