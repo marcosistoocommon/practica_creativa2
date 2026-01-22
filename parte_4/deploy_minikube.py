@@ -16,6 +16,23 @@ def run_cmd(cmd):
     print(cmd)
     return subprocess.call(cmd, shell=True)
 
+def set_docker_env():
+    try:
+        output = subprocess.check_output("minikube docker-env --shell=sh", shell=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print("Error obteniendo entorno docker de minikube: {}".format(e))
+        sys.exit(1)
+    for line in output.splitlines():
+        line = line.strip()
+        if line.startswith("export "):
+            kv = line[len("export "):]
+            if "=" in kv:
+                k, v = kv.split("=", 1)
+                os.environ[k] = v.strip('"')
+        elif line.startswith("unset "):
+            k = line[len("unset "):]
+            os.environ.pop(k, None)
+
 def main():
     os.chdir(BASE_DIR)
     
@@ -33,7 +50,7 @@ def main():
     
     # Configurar Docker para Minikube
     print("\nConfigurando Docker para Minikube...")
-    os.system('eval $(minikube docker-env)')
+    set_docker_env()
     
     # Construir imagenes desde parte_4/
     print("\nConstruyendo imagenes...")
@@ -64,7 +81,7 @@ def main():
         time.sleep(2)
     
     # Re-evaluar variables de Docker
-    os.system('eval $(minikube docker-env)')
+    set_docker_env()
     
     run_cmd("kubectl apply -f cdps-namespace.yaml")
     run_cmd("kubectl apply -f details.yaml")
