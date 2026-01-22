@@ -139,8 +139,24 @@ def main():
         print("\n✓ Cluster inicializado correctamente")
         print("⏳ Esperando a que el cluster esté completamente listo...")
         time.sleep(30)
+        
+        # Quitar taints del nodo master para permitir scheduling de pods
+        print("\n3d. Configurando nodo master para aceptar pods...")
+        run_command(
+            "kubectl taint nodes --all node-role.kubernetes.io/control-plane- node-role.kubernetes.io/master-",
+            "Quitar taints del nodo master",
+            check=False
+        )
     else:
         print("✓ Conectado al cluster de Kubernetes")
+        
+        # Asegurar que el nodo master puede aceptar pods
+        print("\n3a. Verificando configuración del nodo...")
+        run_command(
+            "kubectl taint nodes --all node-role.kubernetes.io/control-plane- node-role.kubernetes.io/master-",
+            "Quitar taints del nodo master (si existen)",
+            check=False
+        )
     
     # Construir imágenes Docker
     print("\n" + "="*60)
