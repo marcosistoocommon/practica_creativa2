@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Script for deploying the bookinfo microservices application on Kubernetes (Play with Kubernetes)
 Este script automatiza el despliegue de todos los microservicios en Kubernetes
 """
 
+from __future__ import print_function
 import subprocess
 import time
 import sys
@@ -15,56 +16,71 @@ KUBE_DIR = "bookinfo/platform/kube"
 
 def run_command(command, description="", check=True, show_output=True):
     """Ejecuta un comando y maneja errores"""
-    print(f"\n{'='*60}")
-    print(f"Ejecutando: {description if description else command}")
-    print(f"{'='*60}")
+    print("\n{}".format('='*60))
+    print("Ejecutando: {}".format(description if description else command))
+    print("{}".format('='*60))
     
     try:
-        result = subprocess.run(
-            command,
-            shell=True,
-            check=check,
-            capture_output=not show_output,
-            text=True
-        )
-        if not show_output and result.stdout:
-            print(result.stdout)
-        return result
-    except subprocess.CalledProcessError as e:
-        print(f"Error ejecutando comando: {e}")
-        if not show_output:
-            print(f"Stdout: {e.stdout}")
-            print(f"Stderr: {e.stderr}")
+        if show_output:
+            result = subprocess.call(command, shell=True)
+            class Result:
+                def __init__(self, returncode):
+                    self.returncode = returncode
+                    self.stdout = ""
+                    self.stderr = ""
+            return Result(result)
+        else:
+            process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            stdout, stderr = process.communicate()
+            class Result:
+                def __init__(self, returncode, stdout, stderr):
+                    self.returncode = returncode
+                    self.stdout = stdout
+                    self.stderr = stderr
+            result = Result(process.returncode, stdout, stderr)
+            if result.stdout:
+                print(result.stdout)
+            if check and result.returncode != 0:
+                sys.exit(1)
+            return result
+    except Exception as e:
+        print("Error ejecutando comando: {}".format(e))
         if check:
             sys.exit(1)
-        return e
+        return None
 
 def wait_for_pods(namespace, timeout=300):
     """Espera a que todos los pods estén en estado Running"""
-    print(f"\nEsperando a que los pods estén listos (timeout: {timeout}s)...")
+    print("\nEsperando a que los pods estén listos (timeout: {}s)...".format(timeout))
     start_time = time.time()
     
     while time.time() - start_time < timeout:
-        result = subprocess.run(
-            f"kubectl get pods -n {namespace}",
+        process = subprocess.Popen(
+            "kubectl get pods -n {}".format(namespace),
             shell=True,
-            capture_output=True,
-            text=True
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
+        stdout, stderr = process.communicate()
         
-        if result.returncode == 0:
-            print(f"\nEstado actual de los pods:")
-            print(result.stdout)
+        if process.returncode == 0:
+            print("\nEstado actual de los pods:")
+            print(stdout)
             
-
-            lines = result.stdout.strip().split('\n')[1:]  
+            # Skip header
+            lines = stdout.strip().split('\n')[1:]  
             if lines and all('Running' in line or 'Completed' in line for line in lines):
                 print("\n✓ Todos los pods están listos!")
                 return True
         
         time.sleep(10)
     
-    print(f"\n✗ Timeout esperando a que los pods estén listos")
+    print("\n✗ Timeout esperando a que los pods estén listos")
     return False
 
 def main():
@@ -119,64 +135,64 @@ def main():
     
     if os.path.exists(KUBE_DIR):
         os.chdir(KUBE_DIR)
-        print(f"\n✓ Cambiando al directorio: {KUBE_DIR}")
+        print("\n✓ Cambiando al directorio: {}".format(KUBE_DIR))
     else:
-        print(f"\n✗ Directorio {KUBE_DIR} no encontrado")
+        print("\n✗ Directorio {} no encontrado".format(KUBE_DIR))
         sys.exit(1)
     
-    print(f"\n3. Creando namespace {NAMESPACE}...")
-    run_command(f"kubectl apply -f cdps-namespace.yaml", f"Crear namespace {NAMESPACE}")
+    print("\n3. Creando namespace {}...".format(NAMESPACE))
+    run_command("kubectl apply -f cdps-namespace.yaml", "Crear namespace {}".format(NAMESPACE))
     time.sleep(2)
     
-    run_command(f"kubectl get namespace {NAMESPACE}", "Verificar namespace")
+    run_command("kubectl get namespace {}".format(NAMESPACE), "Verificar namespace")
     
-    print(f"\n4. Desplegando microservicio Details (replicas: 4)...")
+    print("\n4. Desplegando microservicio Details (replicas: 4)...")
     run_command("kubectl apply -f details.yaml", "Desplegar Details")
     time.sleep(3)
     
-    print(f"\n5. Desplegando microservicio Ratings (replicas: 3)...")
+    print("\n5. Desplegando microservicio Ratings (replicas: 3)...")
     run_command("kubectl apply -f ratings.yaml", "Desplegar Ratings")
     time.sleep(3)
     
-    print(f"\n6. Desplegando microservicio Reviews...")
+    print("\n6. Desplegando microservicio Reviews...")
     run_command("kubectl apply -f reviews-svc.yaml", "Desplegar Reviews Service")
     time.sleep(2)
     
-    print(f"\n7. Desplegando Reviews v1...")
+    print("\n7. Desplegando Reviews v1...")
     run_command("kubectl apply -f reviews-v1-deployment.yaml", "Desplegar Reviews v1")
     time.sleep(2)
     
-    print(f"\n8. Desplegando Reviews v2...")
+    print("\n8. Desplegando Reviews v2...")
     run_command("kubectl apply -f reviews-v2-deployment.yaml", "Desplegar Reviews v2")
     time.sleep(2)
     
-    print(f"\n9. Desplegando Reviews v3...")
+    print("\n9. Desplegando Reviews v3...")
     run_command("kubectl apply -f reviews-v3-deployment.yaml", "Desplegar Reviews v3")
     time.sleep(2)
     
-    print(f"\n10. Desplegando microservicio Productpage (con acceso externo)...")
+    print("\n10. Desplegando microservicio Productpage (con acceso externo)...")
     run_command("kubectl apply -f productpage.yaml", "Desplegar Productpage")
     time.sleep(3)
     
-    print(f"\n11. Verificando estado de los pods...")
+    print("\n11. Verificando estado de los pods...")
     wait_for_pods(NAMESPACE, timeout=300)
     
-    print(f"\n12. Mostrando recursos desplegados en el namespace {NAMESPACE}...")
-    run_command(f"kubectl get all -n {NAMESPACE}", "Listar todos los recursos")
+    print("\n12. Mostrando recursos desplegados en el namespace {}...".format(NAMESPACE))
+    run_command("kubectl get all -n {}".format(NAMESPACE), "Listar todos los recursos")
     
-    print(f"\n13. Información de los Services...")
-    run_command(f"kubectl get svc -n {NAMESPACE}", "Listar Services")
+    print("\n13. Información de los Services...")
+    run_command("kubectl get svc -n {}".format(NAMESPACE), "Listar Services")
     
-    print(f"\n14. Obteniendo información de acceso externo...")
-    run_command(f"kubectl get svc productpage-service -n {NAMESPACE}", "Service Productpage")
+    print("\n14. Obteniendo información de acceso externo...")
+    run_command("kubectl get svc productpage-service -n {}".format(NAMESPACE), "Service Productpage")
     
-    print(f"\n15. Estado detallado de los Pods...")
-    run_command(f"kubectl get pods -n {NAMESPACE} -o wide", "Pods detallados")
+    print("\n15. Estado detallado de los Pods...")
+    run_command("kubectl get pods -n {} -o wide".format(NAMESPACE), "Pods detallados")
     
-    print(f"\n16. Información de Deployments y réplicas...")
-    run_command(f"kubectl get deployments -n {NAMESPACE}", "Deployments")
+    print("\n16. Información de Deployments y réplicas...")
+    run_command("kubectl get deployments -n {}".format(NAMESPACE), "Deployments")
     
-    print(f"""
+    print("""
     ╔═══════════════════════════════════════════════════════════════╗
     ║                  DESPLIEGUE COMPLETADO                        ║
     ╚═══════════════════════════════════════════════════════════════╝
@@ -193,36 +209,36 @@ def main():
     Comandos útiles:
     ----------------
     # Ver todos los recursos
-    kubectl get all -n {NAMESPACE}
+    kubectl get all -n {0}
     
     # Ver pods en tiempo real
-    kubectl get pods -n {NAMESPACE} -w
+    kubectl get pods -n {0} -w
     
     # Ver logs de un pod específico
-    kubectl logs <pod-name> -n {NAMESPACE}
+    kubectl logs <pod-name> -n {0}
     
     # Obtener IP externa del servicio productpage
-    kubectl get svc productpage-service -n {NAMESPACE}
+    kubectl get svc productpage-service -n {0}
     
     # Describir un pod
-    kubectl describe pod <pod-name> -n {NAMESPACE}
+    kubectl describe pod <pod-name> -n {0}
     
     # Escalar un deployment
-    kubectl scale deployment <deployment-name> --replicas=<number> -n {NAMESPACE}
+    kubectl scale deployment <deployment-name> --replicas=<number> -n {0}
     
     # Eliminar todos los recursos
-    kubectl delete namespace {NAMESPACE}
+    kubectl delete namespace {0}
     
     Acceso a la aplicación:
     -----------------------
     En Play with Kubernetes: Clic en el puerto expuesto arriba
-    En Minikube: minikube service productpage-service -n {NAMESPACE}
+    En Minikube: minikube service productpage-service -n {0}
     En GKE: Usar la EXTERNAL-IP del servicio productpage-service
     
     Nota: En play-with-kubernetes, la IP externa puede tardar unos minutos
           en estar disponible. Si es <pending>, espera un momento y vuelve
-          a ejecutar: kubectl get svc productpage-service -n {NAMESPACE}
-    """)
+          a ejecutar: kubectl get svc productpage-service -n {0}
+    """.format(NAMESPACE))
 
 if __name__ == "__main__":
     try:
@@ -231,7 +247,7 @@ if __name__ == "__main__":
         print("\n\n✗ Script interrumpido por el usuario")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n✗ Error inesperado: {e}")
+        print("\n\n✗ Error inesperado: {}".format(e))
         import traceback
         traceback.print_exc()
         sys.exit(1)
