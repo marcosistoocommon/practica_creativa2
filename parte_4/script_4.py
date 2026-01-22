@@ -10,7 +10,7 @@ import sys
 import os
 
 TEAM_ID = "17"
-NAMESPACE = f"cdps-{TEAM_ID}"
+NAMESPACE = "cdps-{}".format(TEAM_ID)
 KUBE_DIR = "bookinfo/platform/kube"
 
 def run_command(command, description="", check=True, show_output=True):
