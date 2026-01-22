@@ -64,7 +64,7 @@ def main():
     reviews_path = os.path.join(BASE_DIR, "bookinfo/src/reviews")
     os.chdir(reviews_path)
     pwd = os.getcwd()
-    run_cmd(f'docker run --rm -u root -v {pwd}:/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build')
+    run_cmd(f'sudo docker run --rm -u root -v {pwd}:/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build')
     os.chdir(BASE_DIR)
     
     # Construir reviews desde parte_4/
