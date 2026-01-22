@@ -19,19 +19,17 @@ def run_cmd(cmd):
 def main():
     os.chdir(BASE_DIR)
     
-    # Detectar minikube
-    result = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
-    if result != 0:
-        print("Error: No estás en minikube")
-        sys.exit(1)
-    
-    print("Minikube detectado")
-    
-    # Iniciar minikube
-    print("Iniciando Minikube...")
-    subprocess.call("minikube start", shell=True)
-    
-    print("Minikube iniciado")
+    # Asegurar contexto minikube; si no existe, iniciar minikube y fijar contexto
+    current_ctx = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
+    if current_ctx != 0:
+        print("Iniciando Minikube...")
+        subprocess.check_call("minikube start", shell=True)
+        subprocess.call("kubectl config use-context minikube", shell=True)
+        print("Minikube iniciado")
+    else:
+        print("Minikube detectado")
+        print("Asegurando que Minikube está levantado...")
+        subprocess.call("minikube start", shell=True)
     
     # Configurar Docker para Minikube
     print("\nConfigurando Docker para Minikube...")
