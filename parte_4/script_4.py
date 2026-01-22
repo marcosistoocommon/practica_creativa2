@@ -169,6 +169,12 @@ def main():
         "docker build -t {}/details -f Dockerfile.details .".format(TEAM_ID),
         "Construir imagen Details"
     )
+    print("   Importando imagen Details a containerd...")
+    run_command(
+        "docker save {}/details | ctr -n k8s.io images import -".format(TEAM_ID),
+        "Importar imagen a containerd",
+        check=False
+    )
     
     # Construir imagen de Ratings
     print("\n5. Construyendo imagen de Ratings...")
@@ -176,12 +182,24 @@ def main():
         "docker build -t {}/ratings -f Dockerfile.ratings .".format(TEAM_ID),
         "Construir imagen Ratings"
     )
+    print("   Importando imagen Ratings a containerd...")
+    run_command(
+        "docker save {}/ratings | ctr -n k8s.io images import -".format(TEAM_ID),
+        "Importar imagen a containerd",
+        check=False
+    )
     
     # Construir imagen de Productpage
     print("\n6. Construyendo imagen de Productpage...")
     run_command(
         "docker build -t {}/productpage -f Dockerfile.productpage .".format(TEAM_ID),
         "Construir imagen Productpage"
+    )
+    print("   Importando imagen Productpage a containerd...")
+    run_command(
+        "docker save {}/productpage | ctr -n k8s.io images import -".format(TEAM_ID),
+        "Importar imagen a containerd",
+        check=False
     )
     
     # Construir imágenes de Reviews (requiere compilación con Gradle)
@@ -208,6 +226,12 @@ def main():
             "docker build -t {}/reviews-v1 --build-arg service_version=v1 {}".format(TEAM_ID, reviews_docker_dir),
             "Construir imagen Reviews v1"
         )
+        print("   Importando imagen Reviews v1 a containerd...")
+        run_command(
+            "docker save {}/reviews-v1 | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     else:
         print("✗ Directorio {} no encontrado".format(reviews_docker_dir))
         sys.exit(1)
@@ -218,12 +242,24 @@ def main():
         "docker build -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true {}".format(TEAM_ID, reviews_docker_dir),
         "Construir imagen Reviews v2"
     )
+    print("   Importando imagen Reviews v2 a containerd...")
+    run_command(
+        "docker save {}/reviews-v2 | ctr -n k8s.io images import -".format(TEAM_ID),
+        "Importar imagen a containerd",
+        check=False
+    )
     
     # Construir Reviews v3
     print("\n10. Construyendo imagen de Reviews v3...")
     run_command(
         "docker build -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red {}".format(TEAM_ID, reviews_docker_dir),
         "Construir imagen Reviews v3"
+    )
+    print("   Importando imagen Reviews v3 a containerd...")
+    run_command(
+        "docker save {}/reviews-v3 | ctr -n k8s.io images import -".format(TEAM_ID),
+        "Importar imagen a containerd",
+        check=False
     )
     
     # Listar imágenes construidas
