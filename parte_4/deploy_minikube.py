@@ -62,7 +62,8 @@ def main():
     # Compilar reviews
     print("\nCompilando Reviews...")
     reviews_path = os.path.abspath(os.path.join(BASE_DIR, "bookinfo/src/reviews"))
-    run_cmd('docker run --rm -u root -v "{}:/home/gradle/project" -w /home/gradle/project gradle:4.8.1 gradle clean build'.format(reviews_path))
+    # Build inside the gradle container with proper working directory
+    run_cmd('cd "{}" && docker run --rm -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build'.format(reviews_path))
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
@@ -120,9 +121,10 @@ def main():
     print("NOTA: minikube tunnel requiere privilegios sudo")
     print("El proceso quedara ejecutandose en segundo plano")
     
-    # Iniciar tunnel en background
-    tunnel_process = subprocess.Popen(
-        ["sudo", "minikube", "tunnel"],
+    # Iniciar tunnel en background con sudo -E para preservar variables de entorno
+    subprocess.Popen(
+        "sudo -E minikube tunnel",
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
