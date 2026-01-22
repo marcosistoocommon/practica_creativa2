@@ -17,8 +17,9 @@ def run_cmd(cmd):
     return subprocess.call(cmd, shell=True)
 
 def set_docker_env():
+    """Set Docker environment to use minikube's Docker daemon"""
     try:
-        output = subprocess.check_output("minikube docker-env --shell=sh", shell=True, text=True)
+        output = subprocess.check_output("minikube docker-env --shell=bash", shell=True, text=True)
     except subprocess.CalledProcessError as e:
         print("Error obteniendo entorno docker de minikube: {}".format(e))
         sys.exit(1)
@@ -40,13 +41,13 @@ def main():
     current_ctx = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
     if current_ctx != 0:
         print("Iniciando Minikube...")
-        subprocess.check_call("minikube start", shell=True)
+        subprocess.check_call("minikube start --driver=docker", shell=True)
         subprocess.call("kubectl config use-context minikube", shell=True)
         print("Minikube iniciado")
     else:
         print("Minikube detectado")
         print("Asegurando que Minikube está levantado...")
-        subprocess.call("minikube start", shell=True)
+        subprocess.call("minikube start --driver=docker", shell=True)
     
     # Configurar Docker para Minikube
     print("\nConfigurando Docker para Minikube...")
@@ -60,7 +61,7 @@ def main():
     
     # Compilar reviews
     print("\nCompilando Reviews...")
-    run_cmd('cd bookinfo/src/reviews && docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build && cd {}'.format(BASE_DIR))
+    run_cmd('cd bookinfo/src/reviews && docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build && cd -')
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
@@ -111,19 +112,54 @@ def main():
             break
         time.sleep(1)
     
-    # Iniciar port-forward en background
-    print("\nIniciando port-forward en background...")
-    try:
-        port_forward = subprocess.Popen(
-            ["kubectl", "port-forward", "-n", NAMESPACE, "svc/productpage-service", "9080:9080"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+    # Iniciar minikube tunnel en background
+    print("\n" + "="*60)
+    print("Iniciando minikube tunnel...")
+    print("="*60)
+    print("NOTA: minikube tunnel requiere privilegios sudo")
+    print("El proceso quedara ejecutandose en segundo plano")
+    
+    # Iniciar tunnel en background
+    tunnel_process = subprocess.Popen(
+        ["sudo", "minikube", "tunnel"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    # Esperar a que el LoadBalancer obtenga una IP externa
+    print("\nEsperando a que el servicio obtenga una IP externa...")
+    external_ip = None
+    for i in range(60):
+        try:
+            output = subprocess.check_output(
+                "kubectl get svc productpage-service -n {} -o jsonpath='{{.status.loadBalancer.ingress[0].ip}}'".format(NAMESPACE),
+                shell=True,
+                text=True
+            )
+            if output and output != "":
+                external_ip = output.strip()
+                break
+        except:
+            pass
         time.sleep(2)
-        print("Port-forward iniciado en puerto 9080")
-        print("Accede a la aplicacion en: http://localhost:9080/productpage")
-    except Exception as e:
-        print("Error iniciando port-forward: {}".format(e))
+    
+    print("\n" + "="*60)
+    print("Despliegue completado!")
+    print("="*60)
+    
+    if external_ip:
+        url = "http://{}:9080/productpage".format(external_ip)
+        print("\n✓ Servicio expuesto exitosamente!")
+        print("\n  URL: {}".format(url))
+        print("\nAccede a la aplicacion en tu navegador (Windows o WSL)")
+        print("\nNOTA: El tunel de minikube debe permanecer activo.")
+        print("      Para detenerlo: sudo pkill -f 'minikube tunnel'")
+    else:
+        print("\n⚠ No se pudo obtener la IP externa")
+        print("  Verifica el estado con: kubectl get svc -n {}".format(NAMESPACE))
+        print("  Asegurate de que minikube tunnel este ejecutandose")
+    
+    print("="*60)
 
 if __name__ == "__main__":
     main()
