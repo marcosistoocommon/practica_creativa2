@@ -96,22 +96,21 @@ def main():
             break
         time.sleep(1)
     
-    # Iniciar túnel en otra terminal
-    print("\nIniciando túnel de Minikube en otra terminal...")
-    system = platform.system()
-    
-    if system == "Windows":
-        subprocess.Popen("start powershell -Command \"minikube tunnel\"", shell=True)
-    elif system == "Darwin":
-        subprocess.Popen(["open", "-a", "Terminal", "-n"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        time.sleep(1)
-        os.system("minikube tunnel &")
-    else:
-        os.system("gnome-terminal -- bash -c 'minikube tunnel' &")
-    
-    time.sleep(3)
-    
-    # Obtener URL de acceso
+    # Obtener IP y puerto de acceso
+    print("\nObtener acceso a la aplicacion:")
+    print("Ejecuta en otra terminal: minikube tunnel")
+    print("\nIniciando tunnel de Minikube en background...")
+    try:
+        tunnel_process = subprocess.Popen(
+            ["minikube", "tunnel"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid if hasattr(os, 'setsid') else None
+        )
+        time.sleep(3)
+        print("Tunnel iniciado")
+    except Exception as e:
+        print("Error iniciando tunnel: {}".format(e))
     print("\nURL del servicio:")
     run_cmd("minikube service productpage-service -n {} --url".format(NAMESPACE))
 
