@@ -97,6 +97,12 @@ def main():
     run_cmd("kubectl apply -f reviews-v3-deployment.yaml")
     run_cmd("kubectl apply -f productpage.yaml")
     
+    # Configurar Java para usar modo interprete (sin JIT) bajo emulacion QEMU
+    print("\nConfigurando Java para compatibilidad con ARM64...")
+    run_cmd("kubectl set env deployment/reviews-v1 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v2 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v3 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+    
     # Mostrar estado
     print("\nPods:")
     run_cmd("kubectl get pods -n {}".format(NAMESPACE))
