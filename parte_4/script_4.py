@@ -15,6 +15,26 @@ TEAM_ID = "17"
 NAMESPACE = "cdps-{}".format(TEAM_ID)
 KUBE_DIR = "bookinfo/platform/kube"
 
+
+def detect_container_runtime():
+    """Devuelve el runtime de contenedores reportado por el nodo"""
+    result = run_command(
+        "kubectl get node -o jsonpath=\"{.items[0].status.nodeInfo.containerRuntimeVersion}\"",
+        "Detectar runtime de contenedores",
+        check=False,
+        show_output=False,
+    )
+
+    runtime_raw = ""
+    if result and hasattr(result, "stdout") and result.stdout:
+        runtime_raw = result.stdout.decode().strip() if isinstance(result.stdout, bytes) else str(result.stdout).strip()
+
+    if not runtime_raw:
+        runtime_raw = "unknown"
+
+    print("Runtime de contenedores detectado: {}".format(runtime_raw))
+    return runtime_raw.lower()
+
 def run_command(command, description="", check=True, show_output=True):
     """Ejecuta un comando y maneja errores"""
     print("\n{}".format('='*60))
@@ -157,6 +177,10 @@ def main():
             "Quitar taints del nodo master (si existen)",
             check=False
         )
+
+    # Detectar runtime de contenedores para decidir si es necesario importar con ctr
+    container_runtime = detect_container_runtime()
+    is_docker_runtime = container_runtime.startswith("docker")
     
     # Construir imágenes Docker
     print("\n" + "="*60)
@@ -169,12 +193,16 @@ def main():
         "docker build -t {}/details -f Dockerfile.details .".format(TEAM_ID),
         "Construir imagen Details"
     )
-    print("   Importando imagen Details a containerd...")
-    run_command(
-        "docker save {}/details | ctr -n k8s.io images import -".format(TEAM_ID),
-        "Importar imagen a containerd",
-        check=False
-    )
+    if is_docker_runtime:
+        print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+        print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+    else:
+        print("   Importando imagen Details a containerd...")
+        run_command(
+            "docker save {}/details | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     
     # Construir imagen de Ratings
     print("\n5. Construyendo imagen de Ratings...")
@@ -182,12 +210,16 @@ def main():
         "docker build -t {}/ratings -f Dockerfile.ratings .".format(TEAM_ID),
         "Construir imagen Ratings"
     )
-    print("   Importando imagen Ratings a containerd...")
-    run_command(
-        "docker save {}/ratings | ctr -n k8s.io images import -".format(TEAM_ID),
-        "Importar imagen a containerd",
-        check=False
-    )
+    if is_docker_runtime:
+        print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+        print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+    else:
+        print("   Importando imagen Ratings a containerd...")
+        run_command(
+            "docker save {}/ratings | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     
     # Construir imagen de Productpage
     print("\n6. Construyendo imagen de Productpage...")
@@ -195,12 +227,16 @@ def main():
         "docker build -t {}/productpage -f Dockerfile.productpage .".format(TEAM_ID),
         "Construir imagen Productpage"
     )
-    print("   Importando imagen Productpage a containerd...")
-    run_command(
-        "docker save {}/productpage | ctr -n k8s.io images import -".format(TEAM_ID),
-        "Importar imagen a containerd",
-        check=False
-    )
+    if is_docker_runtime:
+        print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+        print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+    else:
+        print("   Importando imagen Productpage a containerd...")
+        run_command(
+            "docker save {}/productpage | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     
     # Construir imágenes de Reviews (requiere compilación con Gradle)
     print("\n7. Compilando aplicación Reviews con Gradle...")
@@ -226,12 +262,16 @@ def main():
             "docker build -t {}/reviews-v1 --build-arg service_version=v1 {}".format(TEAM_ID, reviews_docker_dir),
             "Construir imagen Reviews v1"
         )
-        print("   Importando imagen Reviews v1 a containerd...")
-        run_command(
-            "docker save {}/reviews-v1 | ctr -n k8s.io images import -".format(TEAM_ID),
-            "Importar imagen a containerd",
-            check=False
-        )
+        if is_docker_runtime:
+            print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+            print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+        else:
+            print("   Importando imagen Reviews v1 a containerd...")
+            run_command(
+                "docker save {}/reviews-v1 | ctr -n k8s.io images import -".format(TEAM_ID),
+                "Importar imagen a containerd",
+                check=False
+            )
     else:
         print("✗ Directorio {} no encontrado".format(reviews_docker_dir))
         sys.exit(1)
@@ -242,12 +282,16 @@ def main():
         "docker build -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true {}".format(TEAM_ID, reviews_docker_dir),
         "Construir imagen Reviews v2"
     )
-    print("   Importando imagen Reviews v2 a containerd...")
-    run_command(
-        "docker save {}/reviews-v2 | ctr -n k8s.io images import -".format(TEAM_ID),
-        "Importar imagen a containerd",
-        check=False
-    )
+    if is_docker_runtime:
+        print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+        print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+    else:
+        print("   Importando imagen Reviews v2 a containerd...")
+        run_command(
+            "docker save {}/reviews-v2 | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     
     # Construir Reviews v3
     print("\n10. Construyendo imagen de Reviews v3...")
@@ -255,12 +299,16 @@ def main():
         "docker build -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red {}".format(TEAM_ID, reviews_docker_dir),
         "Construir imagen Reviews v3"
     )
-    print("   Importando imagen Reviews v3 a containerd...")
-    run_command(
-        "docker save {}/reviews-v3 | ctr -n k8s.io images import -".format(TEAM_ID),
-        "Importar imagen a containerd",
-        check=False
-    )
+    if is_docker_runtime:
+        print("   Runtime Docker detectado: no se importa con ctr; la imagen ya est\u00e1 disponible en Docker.")
+        print("   Si hay m\u00e1s nodos, sube estas im\u00e1genes a un registro o rep\u00edtalas en cada nodo.")
+    else:
+        print("   Importando imagen Reviews v3 a containerd...")
+        run_command(
+            "docker save {}/reviews-v3 | ctr -n k8s.io images import -".format(TEAM_ID),
+            "Importar imagen a containerd",
+            check=False
+        )
     
     # Listar imágenes construidas
     print("\n11. Verificando imágenes construidas...")
