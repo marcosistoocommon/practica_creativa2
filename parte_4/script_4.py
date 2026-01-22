@@ -9,7 +9,6 @@ import time
 import sys
 import os
 
-# Configuración
 TEAM_ID = "17"
 NAMESPACE = f"cdps-{TEAM_ID}"
 KUBE_DIR = "bookinfo/platform/kube"
@@ -57,8 +56,8 @@ def wait_for_pods(namespace, timeout=300):
             print(f"\nEstado actual de los pods:")
             print(result.stdout)
             
-            # Verificar si todos los pods están Running
-            lines = result.stdout.strip().split('\n')[1:]  # Skip header
+
+            lines = result.stdout.strip().split('\n')[1:]  
             if lines and all('Running' in line or 'Completed' in line for line in lines):
                 print("\n✓ Todos los pods están listos!")
                 return True
@@ -76,7 +75,7 @@ def main():
     ╚═══════════════════════════════════════════════════════════════╝
     """)
     
-    # Verificar que kubectl está instalado
+    
     print("\n1. Verificando instalación de kubectl...")
     result = run_command("kubectl version --client", "Verificar kubectl", check=False, show_output=False)
     if result.returncode != 0:
@@ -84,13 +83,12 @@ def main():
         sys.exit(1)
     print("✓ kubectl está instalado")
     
-    # Verificar conexión al cluster
+    
     print("\n2. Verificando conexión al cluster de Kubernetes...")
     result = run_command("kubectl cluster-info", "Información del cluster", check=False, show_output=False)
     if result.returncode != 0:
         print("\n✗ Cluster no inicializado. Inicializando cluster de Kubernetes para Play with Kubernetes...")
         
-        # Inicializar el nodo master del cluster (Play with Kubernetes)
         print("\n2a. Inicializando nodo master del cluster...")
         init_result = run_command(
             "kubeadm init --apiserver-advertise-address $(hostname -i) --pod-network-cidr 10.5.0.0/16",
@@ -102,13 +100,11 @@ def main():
             print("✗ Error al inicializar el cluster. ¿Estás ejecutando esto como root en Play with Kubernetes?")
             sys.exit(1)
         
-        # Configurar kubectl para el usuario actual
         print("\n2b. Configurando kubectl...")
         run_command("mkdir -p $HOME/.kube", "Crear directorio .kube", check=False)
         run_command("cp -i /etc/kubernetes/admin.conf $HOME/.kube/config", "Copiar configuración", check=False)
         run_command("chown $(id -u):$(id -g) $HOME/.kube/config", "Ajustar permisos", check=False)
         
-        # Inicializar la red del cluster
         print("\n2c. Inicializando red del cluster (kube-router)...")
         run_command(
             "kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml",
@@ -121,7 +117,6 @@ def main():
     else:
         print("✓ Conectado al cluster de Kubernetes")
     
-    # Cambiar al directorio de kubernetes
     if os.path.exists(KUBE_DIR):
         os.chdir(KUBE_DIR)
         print(f"\n✓ Cambiando al directorio: {KUBE_DIR}")
@@ -129,74 +124,58 @@ def main():
         print(f"\n✗ Directorio {KUBE_DIR} no encontrado")
         sys.exit(1)
     
-    # Crear namespace
     print(f"\n3. Creando namespace {NAMESPACE}...")
     run_command(f"kubectl apply -f cdps-namespace.yaml", f"Crear namespace {NAMESPACE}")
     time.sleep(2)
     
-    # Verificar namespace
     run_command(f"kubectl get namespace {NAMESPACE}", "Verificar namespace")
     
-    # Desplegar Details (replicas: 4)
     print(f"\n4. Desplegando microservicio Details (replicas: 4)...")
     run_command("kubectl apply -f details.yaml", "Desplegar Details")
     time.sleep(3)
     
-    # Desplegar Ratings (replicas: 3)
     print(f"\n5. Desplegando microservicio Ratings (replicas: 3)...")
     run_command("kubectl apply -f ratings.yaml", "Desplegar Ratings")
     time.sleep(3)
     
-    # Desplegar Reviews Service
     print(f"\n6. Desplegando microservicio Reviews...")
     run_command("kubectl apply -f reviews-svc.yaml", "Desplegar Reviews Service")
     time.sleep(2)
     
-    # Desplegar Reviews v1
     print(f"\n7. Desplegando Reviews v1...")
     run_command("kubectl apply -f reviews-v1-deployment.yaml", "Desplegar Reviews v1")
     time.sleep(2)
     
-    # Desplegar Reviews v2
     print(f"\n8. Desplegando Reviews v2...")
     run_command("kubectl apply -f reviews-v2-deployment.yaml", "Desplegar Reviews v2")
     time.sleep(2)
     
-    # Desplegar Reviews v3
     print(f"\n9. Desplegando Reviews v3...")
     run_command("kubectl apply -f reviews-v3-deployment.yaml", "Desplegar Reviews v3")
     time.sleep(2)
     
-    # Desplegar Productpage (con LoadBalancer para acceso externo)
     print(f"\n10. Desplegando microservicio Productpage (con acceso externo)...")
     run_command("kubectl apply -f productpage.yaml", "Desplegar Productpage")
     time.sleep(3)
     
-    # Esperar a que los pods estén listos
     print(f"\n11. Verificando estado de los pods...")
     wait_for_pods(NAMESPACE, timeout=300)
     
-    # Mostrar todos los recursos desplegados
     print(f"\n12. Mostrando recursos desplegados en el namespace {NAMESPACE}...")
     run_command(f"kubectl get all -n {NAMESPACE}", "Listar todos los recursos")
     
-    # Mostrar información de los services
     print(f"\n13. Información de los Services...")
     run_command(f"kubectl get svc -n {NAMESPACE}", "Listar Services")
     
-    # Mostrar detalles del servicio de productpage para obtener la IP externa
     print(f"\n14. Obteniendo información de acceso externo...")
     run_command(f"kubectl get svc productpage-service -n {NAMESPACE}", "Service Productpage")
     
-    # Mostrar pods con más detalles
     print(f"\n15. Estado detallado de los Pods...")
     run_command(f"kubectl get pods -n {NAMESPACE} -o wide", "Pods detallados")
     
-    # Mostrar información de réplicas
     print(f"\n16. Información de Deployments y réplicas...")
     run_command(f"kubectl get deployments -n {NAMESPACE}", "Deployments")
     
-    # Instrucciones finales
     print(f"""
     ╔═══════════════════════════════════════════════════════════════╗
     ║                  DESPLIEGUE COMPLETADO                        ║
