@@ -100,8 +100,16 @@ def main():
         sys.exit(1)
     print("✓ kubectl está instalado")
     
+    # Verificar que docker está instalado
+    print("\n2. Verificando instalación de Docker...")
+    result = run_command("docker --version", "Verificar Docker", check=False, show_output=False)
+    if result.returncode != 0:
+        print("✗ Docker no está instalado o no está en el PATH")
+        sys.exit(1)
+    print("✓ Docker está instalado")
     
-    print("\n2. Verificando conexión al cluster de Kubernetes...")
+    
+    print("\n3. Verificando conexión al cluster de Kubernetes...")
     result = run_command("kubectl cluster-info", "Información del cluster", check=False, show_output=False)
     if result.returncode != 0:
         print("\n✗ Cluster no inicializado. Inicializando cluster de Kubernetes para Play with Kubernetes...")
@@ -134,6 +142,86 @@ def main():
     else:
         print("✓ Conectado al cluster de Kubernetes")
     
+    # Construir imágenes Docker
+    print("\n" + "="*60)
+    print("CONSTRUCCIÓN DE IMÁGENES DOCKER")
+    print("="*60)
+    
+    # Construir imagen de Details
+    print("\n4. Construyendo imagen de Details...")
+    run_command(
+        "docker build -t {}/details -f Dockerfile.details .".format(TEAM_ID),
+        "Construir imagen Details"
+    )
+    
+    # Construir imagen de Ratings
+    print("\n5. Construyendo imagen de Ratings...")
+    run_command(
+        "docker build -t {}/ratings -f Dockerfile.ratings .".format(TEAM_ID),
+        "Construir imagen Ratings"
+    )
+    
+    # Construir imagen de Productpage
+    print("\n6. Construyendo imagen de Productpage...")
+    run_command(
+        "docker build -t {}/productpage -f Dockerfile.productpage .".format(TEAM_ID),
+        "Construir imagen Productpage"
+    )
+    
+    # Construir imágenes de Reviews (requiere compilación con Gradle)
+    print("\n7. Compilando aplicación Reviews con Gradle...")
+    reviews_dir = "bookinfo/src/reviews"
+    current_dir = os.getcwd()
+    
+    if os.path.exists(reviews_dir):
+        os.chdir(reviews_dir)
+        run_command(
+            'docker run --rm -u root -v "$(pwd)":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build',
+            "Compilar Reviews con Gradle"
+        )
+        os.chdir(current_dir)
+    else:
+        print("✗ Directorio {} no encontrado".format(reviews_dir))
+        sys.exit(1)
+    
+    # Construir Reviews v1
+    print("\n8. Construyendo imagen de Reviews v1...")
+    reviews_docker_dir = "bookinfo/src/reviews/reviews-wlpcfg"
+    if os.path.exists(reviews_docker_dir):
+        run_command(
+            "docker build -t {}/reviews-v1 --build-arg service_version=v1 {}".format(TEAM_ID, reviews_docker_dir),
+            "Construir imagen Reviews v1"
+        )
+    else:
+        print("✗ Directorio {} no encontrado".format(reviews_docker_dir))
+        sys.exit(1)
+    
+    # Construir Reviews v2
+    print("\n9. Construyendo imagen de Reviews v2...")
+    run_command(
+        "docker build -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true {}".format(TEAM_ID, reviews_docker_dir),
+        "Construir imagen Reviews v2"
+    )
+    
+    # Construir Reviews v3
+    print("\n10. Construyendo imagen de Reviews v3...")
+    run_command(
+        "docker build -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red {}".format(TEAM_ID, reviews_docker_dir),
+        "Construir imagen Reviews v3"
+    )
+    
+    # Listar imágenes construidas
+    print("\n11. Verificando imágenes construidas...")
+    run_command("docker images | grep {}".format(TEAM_ID), "Listar imágenes")
+    
+    print("\n" + "="*60)
+    print("DESPLIEGUE EN KUBERNETES")
+    print("="*60)
+    
+    print("\n" + "="*60)
+    print("DESPLIEGUE EN KUBERNETES")
+    print("="*60)
+    
     if os.path.exists(KUBE_DIR):
         os.chdir(KUBE_DIR)
         print("\n✓ Cambiando al directorio: {}".format(KUBE_DIR))
@@ -141,56 +229,56 @@ def main():
         print("\n✗ Directorio {} no encontrado".format(KUBE_DIR))
         sys.exit(1)
     
-    print("\n3. Creando namespace {}...".format(NAMESPACE))
+    print("\n12. Creando namespace {}...".format(NAMESPACE))
     run_command("kubectl apply -f cdps-namespace.yaml", "Crear namespace {}".format(NAMESPACE))
     time.sleep(2)
     
     run_command("kubectl get namespace {}".format(NAMESPACE), "Verificar namespace")
     
-    print("\n4. Desplegando microservicio Details (replicas: 4)...")
+    print("\n13. Desplegando microservicio Details (replicas: 4)...")
     run_command("kubectl apply -f details.yaml", "Desplegar Details")
     time.sleep(3)
     
-    print("\n5. Desplegando microservicio Ratings (replicas: 3)...")
+    print("\n14. Desplegando microservicio Ratings (replicas: 3)...")
     run_command("kubectl apply -f ratings.yaml", "Desplegar Ratings")
     time.sleep(3)
     
-    print("\n6. Desplegando microservicio Reviews...")
+    print("\n15. Desplegando microservicio Reviews...")
     run_command("kubectl apply -f reviews-svc.yaml", "Desplegar Reviews Service")
     time.sleep(2)
     
-    print("\n7. Desplegando Reviews v1...")
+    print("\n16. Desplegando Reviews v1...")
     run_command("kubectl apply -f reviews-v1-deployment.yaml", "Desplegar Reviews v1")
     time.sleep(2)
     
-    print("\n8. Desplegando Reviews v2...")
+    print("\n17. Desplegando Reviews v2...")
     run_command("kubectl apply -f reviews-v2-deployment.yaml", "Desplegar Reviews v2")
     time.sleep(2)
     
-    print("\n9. Desplegando Reviews v3...")
+    print("\n18. Desplegando Reviews v3...")
     run_command("kubectl apply -f reviews-v3-deployment.yaml", "Desplegar Reviews v3")
     time.sleep(2)
     
-    print("\n10. Desplegando microservicio Productpage (con acceso externo)...")
+    print("\n19. Desplegando microservicio Productpage (con acceso externo)...")
     run_command("kubectl apply -f productpage.yaml", "Desplegar Productpage")
     time.sleep(3)
     
-    print("\n11. Verificando estado de los pods...")
+    print("\n20. Verificando estado de los pods...")
     wait_for_pods(NAMESPACE, timeout=300)
     
-    print("\n12. Mostrando recursos desplegados en el namespace {}...".format(NAMESPACE))
+    print("\n21. Mostrando recursos desplegados en el namespace {}...".format(NAMESPACE))
     run_command("kubectl get all -n {}".format(NAMESPACE), "Listar todos los recursos")
     
-    print("\n13. Información de los Services...")
+    print("\n22. Información de los Services...")
     run_command("kubectl get svc -n {}".format(NAMESPACE), "Listar Services")
     
-    print("\n14. Obteniendo información de acceso externo...")
+    print("\n23. Obteniendo información de acceso externo...")
     run_command("kubectl get svc productpage-service -n {}".format(NAMESPACE), "Service Productpage")
     
-    print("\n15. Estado detallado de los Pods...")
+    print("\n24. Estado detallado de los Pods...")
     run_command("kubectl get pods -n {} -o wide".format(NAMESPACE), "Pods detallados")
     
-    print("\n16. Información de Deployments y réplicas...")
+    print("\n25. Información de Deployments y réplicas...")
     run_command("kubectl get deployments -n {}".format(NAMESPACE), "Deployments")
     
     print("""
