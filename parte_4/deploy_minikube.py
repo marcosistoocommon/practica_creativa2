@@ -111,23 +111,19 @@ def main():
             break
         time.sleep(1)
     
-    # Obtener IP y puerto de acceso
-    print("\nObtener acceso a la aplicacion:")
-    print("Ejecuta en otra terminal: minikube tunnel")
-    print("\nIniciando tunnel de Minikube en background...")
+    # Iniciar port-forward en background
+    print("\nIniciando port-forward en background...")
     try:
-        tunnel_process = subprocess.Popen(
-            ["minikube", "tunnel"],
+        port_forward = subprocess.Popen(
+            ["kubectl", "port-forward", "-n", NAMESPACE, "svc/productpage-service", "9080:9080"],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=os.setsid if hasattr(os, 'setsid') else None
+            stderr=subprocess.PIPE
         )
-        time.sleep(3)
-        print("Tunnel iniciado")
+        time.sleep(2)
+        print("Port-forward iniciado en puerto 9080")
+        print("Accede a la aplicacion en: http://localhost:9080/productpage")
     except Exception as e:
-        print("Error iniciando tunnel: {}".format(e))
-    print("\nURL del servicio:")
-    run_cmd("minikube service productpage-service -n {} --url".format(NAMESPACE))
+        print("Error iniciando port-forward: {}".format(e))
 
 if __name__ == "__main__":
     main()
