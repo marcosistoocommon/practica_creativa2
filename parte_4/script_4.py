@@ -56,6 +56,7 @@ elif cmd == "build":
         subprocess.run(f"docker push {DOCKER_USER}/{image}:{TAG}", shell=True, check=True)
 
 elif cmd == "run":
+    # Delete any active reviews pod before applying the reviews yaml
     subprocess.run(f"kubectl delete pods -l app=reviews -n {NAMESPACE} --ignore-not-found=true", shell=True, check=True)
     yamls = [
         "cdps-namespace.yaml",
@@ -68,10 +69,29 @@ elif cmd == "run":
     for y in yamls:
         subprocess.run(f"kubectl apply -f {os.path.join(kube_path, y)}", shell=True, check=True)
     subprocess.run(f"kubectl get pods -n {NAMESPACE}", shell=True, check=True)
-    print("Esperando IP externa del servicio productpage...")
-    subprocess.run("sleep 15", shell=True, check=True)
     subprocess.run(f"kubectl get services -n {NAMESPACE}", shell=True, check=True)
     subprocess.run(f"kubectl get deployments -n {NAMESPACE}", shell=True, check=True)
+    # Wait for external IP
+    import time
+    import yaml as pyyaml
+    svc_name = "productpage-service"
+    external_ip = None
+    print("Waiting for external IP...")
+    for _ in range(60):  # wait up to 5 minutes
+        svc = subprocess.run(f"kubectl get svc {svc_name} -n {NAMESPACE} -o yaml", shell=True, capture_output=True, text=True)
+        if svc.returncode == 0:
+            svc_yaml = pyyaml.safe_load(svc.stdout)
+            status = svc_yaml.get('status', {})
+            if status:
+                ingress = status.get('loadBalancer', {}).get('ingress', [])
+                if ingress and 'ip' in ingress[0]:
+                    external_ip = ingress[0]['ip']
+                    break
+        time.sleep(5)
+    if external_ip:
+        print(f"\nLa URL de la aplicación es: http://{external_ip}:9080/")
+    else:
+        print("No se obtuvo una IP externa para el servicio productpage-service tras 5 minutos.")
 
 elif cmd == "delete":
     subprocess.run(f"gcloud container clusters delete {CLUSTER_NAME} --zone {ZONE} --quiet", shell=True, check=True)
