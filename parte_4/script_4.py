@@ -70,6 +70,8 @@ def patch_yaml_files():
         with open(yml_path, 'r') as f:
             docs = list(yaml.safe_load_all(f))
         for doc in docs:
+            if doc is None:
+                continue
             if doc.get('kind') == 'Deployment':
                 doc['metadata']['namespace'] = NAMESPACE
                 doc['spec']['replicas'] = replicas
