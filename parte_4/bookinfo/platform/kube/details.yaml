@@ -41,4 +41,3 @@ spec:
         - containerPort: 7070
         securityContext:
           runAsUser: 1000
----

@@ -43,4 +43,3 @@ spec:
         - containerPort: 9080
         securityContext:
           runAsUser: 1000
----
