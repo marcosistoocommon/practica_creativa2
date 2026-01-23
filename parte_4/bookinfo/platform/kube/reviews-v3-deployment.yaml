@@ -23,8 +23,14 @@ spec:
         image: marcosistoocommon/reviews-v3:latest
         imagePullPolicy: IfNotPresent
         env:
-        - name: LOG_DIR
-          value: "/tmp/logs"
+          - name: LOG_DIR
+            value: "/tmp/logs"
+          - name: ENABLE_RATINGS
+            value: "true"
+          - name: APP_VERSION
+            value: "v3"
+          - name: STAR_COLOR
+            value: "red"
         ports:
         - containerPort: 9080
         volumeMounts:

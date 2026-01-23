@@ -28,6 +28,12 @@ spec:
         env:
         - name: LOG_DIR
           value: "/tmp/logs"
+        - name: ENABLE_RATINGS
+          value: "true"
+        - name: APP_VERSION
+          value: "v2"
+        - name: STAR_COLOR
+          value: "black"
         ports:
         - containerPort: 9080
         volumeMounts:
