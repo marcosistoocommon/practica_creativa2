@@ -1,7 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-from __future__ import print_function
 import subprocess
 import os
 import sys
@@ -69,9 +67,9 @@ def main():
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
-    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     
     # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
@@ -102,11 +100,6 @@ def main():
     run_cmd("kubectl set env deployment/reviews-v1 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
     run_cmd("kubectl set env deployment/reviews-v2 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
     run_cmd("kubectl set env deployment/reviews-v3 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
-
-    # Ajustar variables de entorno por version para evitar crashloops
-    run_cmd("kubectl set env deployment/reviews-v1 -n {} SERVICE_VERSION=v1 ENABLE_RATINGS=false STAR_COLOR=".format(NAMESPACE))
-    run_cmd("kubectl set env deployment/reviews-v2 -n {} SERVICE_VERSION=v2 ENABLE_RATINGS=true STAR_COLOR=black".format(NAMESPACE))
-    run_cmd("kubectl set env deployment/reviews-v3 -n {} SERVICE_VERSION=v3 ENABLE_RATINGS=true STAR_COLOR=red".format(NAMESPACE))
     
     # Mostrar estado
     print("\nPods:")
