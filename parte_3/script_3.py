@@ -9,13 +9,14 @@ if len(sys.argv) < 2:
 
 cmd = sys.argv[1].lower()
 
-subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
-subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
-subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker-compose", shell=True)
-subprocess.run("sudo systemctl enable docker", shell=True)
-subprocess.run("sudo systemctl restart docker || true", shell=True)
 
 if cmd == "build":
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
+    subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker-compose", shell=True)
+    subprocess.run("sudo systemctl enable docker", shell=True)
+    subprocess.run("sudo systemctl restart docker || true", shell=True)
+
 
     os.chdir("bookinfo/src/reviews")
     pwd = os.getcwd()
