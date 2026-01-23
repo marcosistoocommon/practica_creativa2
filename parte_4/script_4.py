@@ -114,12 +114,13 @@ def ensure_gcloud_auth():
         print("No hay sesión activa en gcloud. Ejecutando autenticación...")
         run("gcloud auth login")
 
+
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) < 2:
-        print("Uso: python script_4.py [create|build|run|delete]")
+        print("Uso: python script_4.py [create|build|run|delete] [v1|v2|v3]")
         sys.exit(1)
     cmd = sys.argv[1].lower()
+    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
     ensure_gcloud_auth()
     if cmd == "create":
         create_gke_cluster()
@@ -130,11 +131,22 @@ if __name__ == "__main__":
         build_and_push_reviews()
     elif cmd == "run":
         patch_yaml_files()
-        deploy_k8s()
+        # Only deploy the selected reviews version
+        kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
+        yamls = [
+            "cdps-namespace.yaml",
+            "details.yaml",
+            "productpage.yaml",
+            "ratings.yaml",
+            "reviews-svc.yaml",
+            f"reviews-{version}-deployment.yaml",
+        ]
+        for y in yamls:
+            run(f"kubectl apply -f {os.path.join(kube_path, y)}")
         monitor()
     elif cmd == "delete":
         delete_gke_cluster()
     else:
-        print("Comando no reconocido. Usa: create, build, run, delete")
+        print("Comando no reconocido. Usa: create, build, run, delete [v1|v2|v3]")
         sys.exit(1)
 
