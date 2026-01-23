@@ -20,7 +20,7 @@ if cmd == "build":
     pwd = os.getcwd()
     subprocess.run(f"sudo docker run --rm -u root -v {pwd}:/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build", shell=True)
     os.chdir("../../..")
-    subprocess.run("sudo docker compose -f docker-compose.micro.yml build", shell=True)
+    subprocess.run("sudo docker compose --file docker-compose.micro.yml build", shell=True)
 
 if cmd == "run":
     # Reviews version: defaults to v1 if not provided
@@ -49,16 +49,17 @@ if cmd == "run":
         env["REVIEWS_ENABLE_RATINGS"] = "true"
         env["REVIEWS_STAR_COLOR"] = "red"
 
-    subprocess.run("sudo docker compose -f docker-compose.micro.yml up -d", shell=True, env=env)
+    subprocess.run("sudo docker compose --file docker-compose.micro.yml up -d", shell=True, env=env)
 
-elif cmd == "stop":
-    subprocess.run("sudo docker compose -f docker-compose.micro.yml down", shell=True)
+if cmd == "stop":
+    subprocess.run("sudo docker compose --file docker-compose.micro.yml down", shell=True)
 
 elif cmd == "debug":
-    subprocess.run("sudo docker compose -f docker-compose.micro.yml up", shell=True)
+    subprocess.run("sudo docker compose --file docker-compose.micro.yml up", shell=True)
 
 elif cmd == "delete":
-    subprocess.run("sudo docker compose -f docker-compose.micro.yml down --rmi all", shell=True)
+    subprocess.run("sudo docker compose --file docker-compose.micro.yml down --rmi all", shell=True)
+
 else:
     print("Invalid command. Use: build, run, stop, debug, or delete")
     sys.exit(1)
