@@ -6,124 +6,77 @@ DOCKER_USER = "marcosistoocommon"
 TAG = "latest"
 TEAM_ID = "17"
 NAMESPACE = f"cdps-{TEAM_ID}"
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ID = "perfect-obelisk-480209-b2"  # ID de proyecto actualizado
+PROJECT_ID = "perfect-obelisk-480209-b2"
 ZONE = "europe-west1-b"
 CLUSTER_NAME = "bookinfo-cluster"
 NUM_NODES = 3
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Helper to run shell commands
-def run(cmd, cwd=None):
-    print(f"\n>>> Ejecutando: {cmd}")
-    result = subprocess.run(cmd, shell=True, cwd=cwd)
-    if result.returncode != 0:
-        raise RuntimeError(f"Error ejecutando: {cmd}")
+if len(sys.argv) < 2:
+    print("Uso: python script_4.py [create|build|run|delete|stop] [v1|v2|v3]")
+    sys.exit(1)
 
-# Crear cluster en GKE
-def create_gke_cluster():
-    run(f"gcloud config set project {PROJECT_ID}")
-    run(f"gcloud config set compute/zone {ZONE}")
-    run(f"gcloud container clusters create {CLUSTER_NAME} --num-nodes={NUM_NODES} --no-enable-autoscaling")
-    run(f"gcloud container clusters get-credentials {CLUSTER_NAME}")
+cmd = sys.argv[1].lower()
+version = sys.argv[2] if len(sys.argv) > 2 else "v1"
+kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
 
-# Build y push details
-def build_and_push_details():
-    run(f"docker build -t {DOCKER_USER}/details:{TAG} -f Dockerfile.details .", BASE_PATH)
-    run(f"docker push {DOCKER_USER}/details:{TAG}")
 
-# Build y push productpage
-def build_and_push_productpage():
-    run(f"docker build -t {DOCKER_USER}/productpage:{TAG} -f Dockerfile.productpage .", BASE_PATH)
-    run(f"docker push {DOCKER_USER}/productpage:{TAG}")
+try:
+    subprocess.run("gcloud auth print-access-token", shell=True, check=True)
+except subprocess.CalledProcessError:
+    print("No hay sesión activa en gcloud. Ejecutando autenticación...")
+    subprocess.run("gcloud auth login", shell=True, check=True)
 
-# Build y push ratings
-def build_and_push_ratings():
-    run(f"docker build -t {DOCKER_USER}/ratings:{TAG} -f Dockerfile.ratings .", BASE_PATH)
-    run(f"docker push {DOCKER_USER}/ratings:{TAG}")
+try :
+    subprocess.run("docker login", shell=True, check=True)
+except subprocess.CalledProcessError:
+    print("No hay sesión activa en Docker. Ejecutando autenticación...")
+    subprocess.run("docker login", shell=True, check=True)
 
-# Build reviews (gradle) y push reviews-v1, v2, v3
-def build_and_push_reviews():
+
+if cmd == "create":
+    subprocess.run(f"gcloud config set project {PROJECT_ID}", shell=True, check=True)
+    subprocess.run(f"gcloud config set compute/zone {ZONE}", shell=True, check=True)
+    subprocess.run(f"gcloud container clusters create {CLUSTER_NAME} --num-nodes={NUM_NODES} --no-enable-autoscaling", shell=True, check=True)
+    subprocess.run(f"gcloud container clusters get-credentials {CLUSTER_NAME}", shell=True, check=True)
+
+elif cmd == "build":
+    subprocess.run(f"docker build -t {DOCKER_USER}/details:{TAG} -f Dockerfile.details .", shell=True, check=True, cwd=BASE_PATH)
+    subprocess.run(f"docker push {DOCKER_USER}/details:{TAG}", shell=True, check=True)
+    subprocess.run(f"docker build -t {DOCKER_USER}/productpage:{TAG} -f Dockerfile.productpage .", shell=True, check=True, cwd=BASE_PATH)
+    subprocess.run(f"docker push {DOCKER_USER}/productpage:{TAG}", shell=True, check=True)
+    subprocess.run(f"docker build -t {DOCKER_USER}/ratings:{TAG} -f Dockerfile.ratings .", shell=True, check=True, cwd=BASE_PATH)
+    subprocess.run(f"docker push {DOCKER_USER}/ratings:{TAG}", shell=True, check=True)
     reviews_path = os.path.join(BASE_PATH, "bookinfo", "src", "reviews")
-    # Gradle build
-    run(f'docker run --rm -u root -v "{reviews_path}":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build')
+    subprocess.run(f'docker run --rm -u root -v "{reviews_path}":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build', shell=True, check=True)
     dockerfile_dir = os.path.join(reviews_path, "reviews-wlpcfg")
-    dockerfile_name = "Dockerfile"
-    for version in ["v1", "v2", "v3"]:
-        image = f"reviews-{version}"
-        run(f"docker build -t {DOCKER_USER}/{image}:{TAG} -f {dockerfile_name} .", cwd=dockerfile_dir)
-        run(f"docker push {DOCKER_USER}/{image}:{TAG}")
+    for v in ["v1", "v2", "v3"]:
+        image = f"reviews-{v}"
+        subprocess.run(f"docker build -t {DOCKER_USER}/{image}:{TAG} -f Dockerfile .", shell=True, check=True, cwd=dockerfile_dir)
+        subprocess.run(f"docker push {DOCKER_USER}/{image}:{TAG}", shell=True, check=True)
 
-
-# Despliegue en Kubernetes
-def deploy_k8s():
-    kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
+elif cmd == "run":
     yamls = [
-        "cdps-namespace.yaml",  # Aplica el namespace primero
+        "cdps-namespace.yaml",
         "details.yaml",
         "productpage.yaml",
         "ratings.yaml",
         "reviews-svc.yaml",
-        "reviews-v1-deployment.yaml",
-        "reviews-v2-deployment.yaml",
-        "reviews-v3-deployment.yaml",
+        f"reviews-{version}-deployment.yaml",
     ]
     for y in yamls:
-        run(f"kubectl apply -f {os.path.join(kube_path, y)}")
+        subprocess.run(f"kubectl apply -f {os.path.join(kube_path, y)}", shell=True, check=True)
+    subprocess.run(f"kubectl get pods -n {NAMESPACE}", shell=True, check=True)
+    subprocess.run(f"kubectl get services -n {NAMESPACE}", shell=True, check=True)
+    subprocess.run(f"kubectl get deployments -n {NAMESPACE}", shell=True, check=True)
 
-# Monitorización básica
-def monitor():
-    run(f"kubectl get pods -n {NAMESPACE}")
-    run(f"kubectl get services -n {NAMESPACE}")
-    run(f"kubectl get deployments -n {NAMESPACE}")
+elif cmd == "delete":
+    subprocess.run(f"gcloud container clusters delete {CLUSTER_NAME} --zone {ZONE} --quiet", shell=True, check=True)
 
-# Borrar cluster
-def delete_gke_cluster():
-    run(f"gcloud container clusters delete {CLUSTER_NAME} --zone {ZONE} --quiet")
+elif cmd == "stop":
+    subprocess.run(f"kubectl delete namespace {NAMESPACE} --ignore-not-found=true", shell=True, check=True)
 
-# Asegurar autenticación en gcloud
-def ensure_gcloud_auth():
-    try:
-        run("gcloud auth print-access-token")
-    except RuntimeError:
-        print("No hay sesión activa en gcloud. Ejecutando autenticación...")
-        run("gcloud auth login")
-
-# Eliminar namespace de Kubernetes
-def delete_namespace():
-    run(f"kubectl delete namespace {NAMESPACE} --ignore-not-found=true")
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Uso: python script_4.py [create|build|run|delete|stop] [v1|v2|v3]")
-        sys.exit(1)
-    cmd = sys.argv[1].lower()
-    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
-    ensure_gcloud_auth()
-    if cmd == "create":
-        create_gke_cluster()
-    elif cmd == "build":
-        build_and_push_details()
-        build_and_push_productpage()
-        build_and_push_ratings()
-        build_and_push_reviews()
-    elif cmd == "run":
-        kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
-        yamls = [
-            "cdps-namespace.yaml",
-            "details.yaml",
-            "productpage.yaml",
-            "ratings.yaml",
-            "reviews-svc.yaml",
-            f"reviews-{version}-deployment.yaml",
-        ]
-        for y in yamls:
-            run(f"kubectl apply -f {os.path.join(kube_path, y)}")
-        monitor()
-    elif cmd == "delete":
-        delete_gke_cluster()
-    elif cmd == "stop":
-        delete_namespace()
-    else:
-        print("Comando no reconocido. Usa: create, build, run, delete, stop [v1|v2|v3]")
-        sys.exit(1)
+else:
+    print("Comando no reconocido. Usa: create, build, run, delete, stop [v1|v2|v3]")
+    sys.exit(1)
 
