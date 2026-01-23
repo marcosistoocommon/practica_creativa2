@@ -69,9 +69,9 @@ def main():
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/arm64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     
     # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
