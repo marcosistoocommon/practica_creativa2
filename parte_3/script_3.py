@@ -51,6 +51,9 @@ elif cmd == "run":
         env["REVIEWS_ENABLE_RATINGS"] = "true"
         env["REVIEWS_STAR_COLOR"] = "red"
 
+    
+    subprocess.run("sudo docker-compose -f docker-compose.micro.yml down", shell=True)
+    
     subprocess.run("sudo -E docker-compose -f docker-compose.micro.yml up -d", shell=True, env=env)
 
 elif cmd == "stop":
