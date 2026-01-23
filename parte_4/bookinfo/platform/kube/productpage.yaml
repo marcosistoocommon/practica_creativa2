@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: productpage
-        image: 17/productpage
+        image: marcosistoocommon/productpage:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080

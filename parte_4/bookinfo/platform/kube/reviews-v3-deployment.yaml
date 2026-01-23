@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: 17/reviews-v3
+        image: marcosistoocommon/reviews-v3:latest
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
