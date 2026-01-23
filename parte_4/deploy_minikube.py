@@ -102,6 +102,11 @@ def main():
     run_cmd("kubectl set env deployment/reviews-v1 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
     run_cmd("kubectl set env deployment/reviews-v2 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
     run_cmd("kubectl set env deployment/reviews-v3 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+
+    # Ajustar variables de entorno por version para evitar crashloops
+    run_cmd("kubectl set env deployment/reviews-v1 -n {} SERVICE_VERSION=v1 ENABLE_RATINGS=false STAR_COLOR=".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v2 -n {} SERVICE_VERSION=v2 ENABLE_RATINGS=true STAR_COLOR=black".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v3 -n {} SERVICE_VERSION=v3 ENABLE_RATINGS=true STAR_COLOR=red".format(NAMESPACE))
     
     # Mostrar estado
     print("\nPods:")
