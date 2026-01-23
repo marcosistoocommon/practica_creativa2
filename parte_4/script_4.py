@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from __future__ import print_function
 import subprocess
 import os
 import sys
@@ -37,16 +39,15 @@ def main():
     
     # Asegurar contexto minikube; si no existe, iniciar minikube y fijar contexto
     current_ctx = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
-    minikube_start_cmd = "minikube start --driver=docker"
     if current_ctx != 0:
-        print("Iniciando Minikube (amd64 emulation)...")
-        subprocess.check_call(minikube_start_cmd, shell=True)
+        print("Iniciando Minikube...")
+        subprocess.check_call("minikube start --driver=docker", shell=True)
         subprocess.call("kubectl config use-context minikube", shell=True)
         print("Minikube iniciado")
     else:
         print("Minikube detectado")
-        print("Asegurando que Minikube está levantado (amd64 emulation)...")
-        subprocess.call(minikube_start_cmd, shell=True)
+        print("Asegurando que Minikube está levantado...")
+        subprocess.call("minikube start --driver=docker", shell=True)
     
     # Configurar Docker para Minikube
     print("\nConfigurando Docker para Minikube...")
@@ -68,9 +69,9 @@ def main():
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
-    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     
     # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
@@ -95,7 +96,12 @@ def main():
     run_cmd("kubectl apply -f reviews-v2-deployment.yaml")
     run_cmd("kubectl apply -f reviews-v3-deployment.yaml")
     run_cmd("kubectl apply -f productpage.yaml")
-
+    
+    # Configurar Java para usar modo interprete (sin JIT) bajo emulacion QEMU
+    print("\nConfigurando Java para compatibilidad con ARM64...")
+    run_cmd("kubectl set env deployment/reviews-v1 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v2 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+    run_cmd("kubectl set env deployment/reviews-v3 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
     
     # Mostrar estado
     print("\nPods:")
