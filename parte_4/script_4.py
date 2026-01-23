@@ -1,5 +1,6 @@
 import subprocess
 import os
+import sys
 
 DOCKER_USER = "marcosistoocommon"
 TAG = "latest"
@@ -98,13 +99,29 @@ def monitor():
     run(f"kubectl get services -n {NAMESPACE}")
     run(f"kubectl get deployments -n {NAMESPACE}")
 
+# Borrar cluster
+def delete_gke_cluster():
+    run(f"gcloud container clusters delete {CLUSTER_NAME} --zone {ZONE} --quiet")
+
 if __name__ == "__main__":
-    create_gke_cluster()
-    build_and_push_details()
-    build_and_push_productpage()
-    build_and_push_ratings()
-    build_and_push_reviews()
-    patch_yaml_files()
-    deploy_k8s()
-    monitor()
+    if len(sys.argv) < 2:
+        print("Uso: python script_4.py [create|build|run|delete]")
+        sys.exit(1)
+    cmd = sys.argv[1].lower()
+    if cmd == "create":
+        create_gke_cluster()
+    elif cmd == "build":
+        build_and_push_details()
+        build_and_push_productpage()
+        build_and_push_ratings()
+        build_and_push_reviews()
+    elif cmd == "run":
+        patch_yaml_files()
+        deploy_k8s()
+        monitor()
+    elif cmd == "delete":
+        delete_gke_cluster()
+    else:
+        print("Comando no reconocido. Usa: create, build, run, delete")
+        sys.exit(1)
 
