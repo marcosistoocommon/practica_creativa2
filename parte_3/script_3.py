@@ -11,6 +11,7 @@ cmd = sys.argv[1].lower()
 
 subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt-get update -y", shell=True)
 subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker.io", shell=True)
+subprocess.run("export DEBIAN_FRONTEND=noninteractive && sudo apt install -y docker-compose", shell=True)
 subprocess.run("sudo systemctl enable docker", shell=True)
 subprocess.run("sudo systemctl restart docker || true", shell=True)
 
@@ -22,7 +23,7 @@ if cmd == "build":
     os.chdir("../../..")
     subprocess.run("sudo docker-compose -f docker-compose.micro.yml build", shell=True)
 
-if cmd == "run":
+elif cmd == "run":
     # Reviews version: defaults to v1 if not provided
     raw_ver = sys.argv[2].lower().strip() if len(sys.argv) >= 3 else "v1"
     if raw_ver in ("1", "v1"):
@@ -32,7 +33,7 @@ if cmd == "run":
     elif raw_ver in ("3", "v3"):
         version = "v3"
     else:
-        print("Invalid reviews version. Use v2, or v3.")
+        print("Invalid reviews version. Use v1, v2, or v3.")
         sys.exit(1)
 
     env = os.environ.copy()
@@ -51,13 +52,13 @@ if cmd == "run":
 
     subprocess.run("sudo docker-compose -f docker-compose.micro.yml up -d", shell=True, env=env)
 
-if cmd == "stop":
+elif cmd == "stop":
     subprocess.run("sudo docker-compose -f docker-compose.micro.yml down", shell=True)
 
-if cmd == "debug":
+elif cmd == "debug":
     subprocess.run("sudo docker-compose -f docker-compose.micro.yml up", shell=True)
 
-if cmd == "delete":
+elif cmd == "delete":
     subprocess.run("sudo docker-compose -f docker-compose.micro.yml down --rmi all", shell=True)
 
 else:
