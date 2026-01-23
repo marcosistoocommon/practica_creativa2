@@ -68,9 +68,9 @@ def main():
     
     # Construir reviews desde parte_4/
     print("\nConstruyendo imagenes de Reviews...")
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
-    run_cmd("docker buildx build --platform=linux/amd64 --load -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v1 --build-arg service_version=v1 --build-arg enable_ratings=false bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v2 --build-arg service_version=v2 --build-arg enable_ratings=true --build-arg star_color=black bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
+    run_cmd("docker build -f bookinfo/src/reviews/reviews-wlpcfg/Dockerfile -t {}/reviews-v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red bookinfo/src/reviews/reviews-wlpcfg".format(TEAM_ID))
     
     # Desplegar desde bookinfo/platform/kube
     print("\nDesplegando en Kubernetes...")
@@ -95,12 +95,7 @@ def main():
     run_cmd("kubectl apply -f reviews-v2-deployment.yaml")
     run_cmd("kubectl apply -f reviews-v3-deployment.yaml")
     run_cmd("kubectl apply -f productpage.yaml")
-    
-    # Configurar Java para usar modo interprete (sin JIT) bajo emulacion QEMU
-    print("\nConfigurando Java para compatibilidad con ARM64...")
-    run_cmd("kubectl set env deployment/reviews-v1 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
-    run_cmd("kubectl set env deployment/reviews-v2 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
-    run_cmd("kubectl set env deployment/reviews-v3 -n {} JAVA_TOOL_OPTIONS=-Xint".format(NAMESPACE))
+
     
     # Mostrar estado
     print("\nPods:")
