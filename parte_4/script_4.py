@@ -106,11 +106,21 @@ def monitor():
 def delete_gke_cluster():
     run(f"gcloud container clusters delete {CLUSTER_NAME} --zone {ZONE} --quiet")
 
+# Asegurar autenticación en gcloud
+def ensure_gcloud_auth():
+    try:
+        run("gcloud auth print-access-token")
+    except RuntimeError:
+        print("No hay sesión activa en gcloud. Ejecutando autenticación...")
+        run("gcloud auth login")
+
 if __name__ == "__main__":
+    import sys
     if len(sys.argv) < 2:
         print("Uso: python script_4.py [create|build|run|delete]")
         sys.exit(1)
     cmd = sys.argv[1].lower()
+    ensure_gcloud_auth()
     if cmd == "create":
         create_gke_cluster()
     elif cmd == "build":
