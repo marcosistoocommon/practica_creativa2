@@ -37,7 +37,7 @@ def main():
     
     # Asegurar contexto minikube; si no existe, iniciar minikube y fijar contexto
     current_ctx = subprocess.call("kubectl config current-context | grep minikube > /dev/null 2>&1", shell=True)
-    minikube_start_cmd = "minikube start --driver=docker --arch=amd64"
+    minikube_start_cmd = "minikube start --driver=docker"
     if current_ctx != 0:
         print("Iniciando Minikube (amd64 emulation)...")
         subprocess.check_call(minikube_start_cmd, shell=True)
