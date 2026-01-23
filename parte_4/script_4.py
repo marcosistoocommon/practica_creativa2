@@ -56,6 +56,7 @@ elif cmd == "build":
         subprocess.run(f"docker push {DOCKER_USER}/{image}:{TAG}", shell=True, check=True)
 
 elif cmd == "run":
+    subprocess.run(f"kubectl delete pods -l app=reviews -n {NAMESPACE} --ignore-not-found=true", shell=True, check=True)
     yamls = [
         "cdps-namespace.yaml",
         "details.yaml",
