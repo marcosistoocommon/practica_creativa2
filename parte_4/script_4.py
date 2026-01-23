@@ -45,10 +45,10 @@ def build_and_push_reviews():
     reviews_path = os.path.join(BASE_PATH, "bookinfo", "src", "reviews")
     # Gradle build
     run(f'docker run --rm -u root -v "{reviews_path}":/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build')
-    dockerfile_path = os.path.join(reviews_path, "reviews-application", "Dockerfile")
+    dockerfile_dir = os.path.join(reviews_path, "reviews-application")
     for version in ["v1", "v2", "v3"]:
         image = f"reviews-{version}"
-        run(f"docker build -t {DOCKER_USER}/{image}:{TAG} -f {dockerfile_path} .", BASE_PATH)
+        run(f"docker build -t {DOCKER_USER}/{image}:{TAG} -f Dockerfile .", cwd=dockerfile_dir)
         run(f"docker push {DOCKER_USER}/{image}:{TAG}")
 
 # Añadir namespace y replicas a los manifiestos yaml
