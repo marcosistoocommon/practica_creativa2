@@ -3,7 +3,7 @@
 import subprocess, os, sys
 
 if len(sys.argv) < 2:
-    print("Usage: python script_2.py [build|run]")
+    print("Usage: python script_1.py [build|run]")
     sys.exit(1)
 
 cmd = sys.argv[1].lower()
