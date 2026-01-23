@@ -20,7 +20,7 @@ if cmd == "build":
     pwd = os.getcwd()
     subprocess.run(f"sudo docker run --rm -u root -v {pwd}:/home/gradle/project -w /home/gradle/project gradle:4.8.1 gradle clean build", shell=True)
     os.chdir("../../..")
-    subprocess.run("sudo docker compose --file docker-compose.micro.yml build", shell=True)
+    subprocess.run("sudo docker-compose -f docker-compose.micro.yml build", shell=True)
 
 if cmd == "run":
     # Reviews version: defaults to v1 if not provided
