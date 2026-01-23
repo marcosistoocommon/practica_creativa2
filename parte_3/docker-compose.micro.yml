@@ -57,9 +57,9 @@ services:
     ports:
       - "9081:9080"
     environment:
-      - ENABLE_RATINGS=true
-      - APP_VERSION=v3
-      - STAR_COLOR=red
+      - ENABLE_RATINGS=${REVIEWS_ENABLE_RATINGS:-false}
+      - APP_VERSION=${REVIEWS_APP_VERSION:-v1}
+      - STAR_COLOR=${REVIEWS_STAR_COLOR:-black}
     volumes:
       - ./bookinfo/src/reviews:/opt/microservices
       - /opt/microservices/node_modules
