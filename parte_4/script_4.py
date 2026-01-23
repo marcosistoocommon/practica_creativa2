@@ -53,32 +53,6 @@ def build_and_push_reviews():
         run(f"docker build -t {DOCKER_USER}/{image}:{TAG} -f {dockerfile_name} .", cwd=dockerfile_dir)
         run(f"docker push {DOCKER_USER}/{image}:{TAG}")
 
-# Añadir namespace y replicas a los manifiestos yaml
-def patch_yaml_files():
-    import yaml
-    kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
-    yamls = [
-        ("details.yaml", 4),
-        ("productpage.yaml", 1),
-        ("ratings.yaml", 3),
-        ("reviews-v1-deployment.yaml", 1),
-        ("reviews-v2-deployment.yaml", 1),
-        ("reviews-v3-deployment.yaml", 1),
-    ]
-    for yml, replicas in yamls:
-        yml_path = os.path.join(kube_path, yml)
-        with open(yml_path, 'r') as f:
-            docs = list(yaml.safe_load_all(f))
-        for doc in docs:
-            if doc is None:
-                continue
-            if doc.get('kind') == 'Deployment':
-                doc['metadata']['namespace'] = NAMESPACE
-                doc['spec']['replicas'] = replicas
-            elif doc.get('kind') == 'Service':
-                doc['metadata']['namespace'] = NAMESPACE
-        with open(yml_path, 'w') as f:
-            yaml.dump_all(docs, f)
 
 # Despliegue en Kubernetes
 def deploy_k8s():
@@ -114,10 +88,13 @@ def ensure_gcloud_auth():
         print("No hay sesión activa en gcloud. Ejecutando autenticación...")
         run("gcloud auth login")
 
+# Eliminar namespace de Kubernetes
+def delete_namespace():
+    run(f"kubectl delete namespace {NAMESPACE} --ignore-not-found=true")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: python script_4.py [create|build|run|delete] [v1|v2|v3]")
+        print("Uso: python script_4.py [create|build|run|delete|stop] [v1|v2|v3]")
         sys.exit(1)
     cmd = sys.argv[1].lower()
     version = sys.argv[2] if len(sys.argv) > 2 else "v1"
@@ -130,8 +107,6 @@ if __name__ == "__main__":
         build_and_push_ratings()
         build_and_push_reviews()
     elif cmd == "run":
-        patch_yaml_files()
-        # Only deploy the selected reviews version
         kube_path = os.path.join(BASE_PATH, "bookinfo", "platform", "kube")
         yamls = [
             "cdps-namespace.yaml",
@@ -146,7 +121,9 @@ if __name__ == "__main__":
         monitor()
     elif cmd == "delete":
         delete_gke_cluster()
+    elif cmd == "stop":
+        delete_namespace()
     else:
-        print("Comando no reconocido. Usa: create, build, run, delete [v1|v2|v3]")
+        print("Comando no reconocido. Usa: create, build, run, delete, stop [v1|v2|v3]")
         sys.exit(1)
 
