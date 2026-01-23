@@ -68,6 +68,8 @@ elif cmd == "run":
     for y in yamls:
         subprocess.run(f"kubectl apply -f {os.path.join(kube_path, y)}", shell=True, check=True)
     subprocess.run(f"kubectl get pods -n {NAMESPACE}", shell=True, check=True)
+    print("Esperando IP externa del servicio productpage...")
+    subprocess.run("sleep 15", shell=True, check=True)
     subprocess.run(f"kubectl get services -n {NAMESPACE}", shell=True, check=True)
     subprocess.run(f"kubectl get deployments -n {NAMESPACE}", shell=True, check=True)
 
